@@ -2,6 +2,17 @@
 import type { Activity, Claim, Desk, Disposal, Item } from '../types/item';
 import type { AppSettings } from '../types/settings';
 import type { Role } from '../types/user';
+import blueBottlePhoto from './photos/blue-bottle.jpg';
+import earbudsPhoto from './photos/earbuds.jpg';
+import blackJacketPhoto from './photos/black-jacket.jpg';
+import calculatorPhoto from './photos/calculator.jpg';
+import umbrellaPhoto from './photos/umbrella.jpg';
+import notebookPhoto from './photos/notebook.jpg';
+import mousePhoto from './photos/mouse.jpg';
+import purpleHoodiePhoto from './photos/purple-hoodie.jpg';
+import navyFleecePhoto from './photos/navy-fleece.jpg';
+import backpackPhoto from './photos/backpack.jpg';
+import glassesPhoto from './photos/glasses.jpg';
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -27,20 +38,20 @@ export const desks: Desk[] = [
 
 type Seed = [name: string, category: Item['category'], deskId: string, daysAgo: number, extra?: Partial<Item>];
 const seeds: Seed[] = [
-  ['Blue Hydro Flask', 'Water bottles', 'spac', 1, { description: '32 oz, navy, dented near the base.', photoPath: 'p:#3b5b8c:3:4' }],
-  ['AirPods Pro case', 'Electronics', 'main-library', 1, { photoPath: 'p:#e9e9e6:4:3' }],
+  ['Blue Hydro Flask', 'Water bottles', 'spac', 1, { description: '32 oz, navy, dented near the base.', photoPath: blueBottlePhoto }],
+  ['AirPods Pro case', 'Electronics', 'main-library', 1, { photoPath: earbudsPhoto }],
   ['Wallet', 'Wallets', 'norris', 2, { sensitive: true }],
-  ['Black North Face jacket', 'Clothing', 'norris', 2, { photoPath: 'p:#2a2a2c:3:4' }],
+  ['Black North Face jacket', 'Clothing', 'norris', 2, { photoPath: blackJacketPhoto }],
   ['Keys on a purple lanyard', 'Keys', 'mudd-library', 3, { sensitive: true }],
-  ['TI-84 Plus calculator', 'Electronics', 'mudd-library', 4, { status: 'claimed', photoPath: 'p:#55575c:1:1' }],
-  ['Gray compact umbrella', 'Other', 'main-library', 5, { photoPath: 'p:#8d9095:9:16' }],
-  ['Spiral notebook', 'Books and supplies', 'norris', 6, { photoPath: 'p:#c9b48a:4:3' }],
-  ['Logitech wireless mouse', 'Electronics', 'main-library', 7, { photoPath: 'p:#3d3f44:16:9' }],
-  ['Northwestern hoodie', 'Clothing', 'spac', 8, { photoPath: 'p:#4e2a84:3:4' }],
-  ['Navy fleece', 'Clothing', 'norris', 16, { photoPath: 'p:#26324a:4:3' }],
+  ['TI-84 Plus calculator', 'Electronics', 'mudd-library', 4, { status: 'claimed', photoPath: calculatorPhoto }],
+  ['Gray compact umbrella', 'Other', 'main-library', 5, { photoPath: umbrellaPhoto }],
+  ['Spiral notebook', 'Books and supplies', 'norris', 6, { photoPath: notebookPhoto }],
+  ['Logitech wireless mouse', 'Electronics', 'main-library', 7, { photoPath: mousePhoto }],
+  ['Northwestern hoodie', 'Clothing', 'spac', 8, { photoPath: purpleHoodiePhoto }],
+  ['Navy fleece', 'Clothing', 'norris', 16, { photoPath: navyFleecePhoto }],
   ['Silver bracelet', 'Jewelry', 'norris', 37, { sensitive: true }],
-  ['Black backpack', 'Bags', 'spac', 41, { photoPath: 'p:#1f2023:3:4' }],
-  ['Reading glasses', 'Other', 'main-library', 45, { photoPath: 'p:#a07c55:16:9' }],
+  ['Black backpack', 'Bags', 'spac', 41, { photoPath: backpackPhoto }],
+  ['Reading glasses', 'Other', 'main-library', 45, { photoPath: glassesPhoto }],
   ['Gray scarf', 'Clothing', 'main-library', 50, { status: 'donated', statusChangedAt: day(19) }],
 ];
 

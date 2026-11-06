@@ -19,8 +19,9 @@ export const subscribeItem = (id: string, onChange: (i: Item | null) => void) =>
 export const subscribeItemPrivate = (id: string, onChange: (v: ItemPrivate) => void) =>
   watch(() => privateDetails[id] ?? { details: '', claim: null, disposal: null }, onChange);
 
-/** Mock photos are "p:#hex:w:h" — a flat swatch in that aspect ratio, with a centered mark to show cropping. */
+/** Seed photos are bundled assets; keep legacy swatches for newly created mock items. */
 export const getPhotoUrl = async (path: string) => {
+  if (!path.startsWith('p:')) return path;
   const [, color = '#999', w = 4, h = 3] = path.split(':').map((part, i) => (i > 1 ? Number(part) : part)) as [string, string, number, number];
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w * 100}" height="${h * 100}" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="${color}"/><circle cx="${w / 2}" cy="${h / 2}" r="${Math.min(w, h) * 0.3}" fill="#fff" fill-opacity=".2"/><rect x=".04" y=".04" width="${w - 0.08}" height="${h - 0.08}" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width=".02"/></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
