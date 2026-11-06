@@ -1,0 +1,34 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Must stay in sync with src/utilities/email.ts and firestore.rules
+    function isNorthwestern() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower().matches('^[^@]+@(u[.])?northwestern[.]edu$');
+    }
+
+    function isStaff() {
+      let roleDoc = /databases/(default)/documents/roles/$(request.auth.token.email.lower());
+      return isNorthwestern()
+        && firestore.exists(roleDoc)
+        && firestore.get(roleDoc).data.role in ['admin', 'superadmin'];
+    }
+
+    // Students may see the photo only for listed, non-sensitive items.
+    function isPublicPhoto(itemId) {
+      let item = firestore.get(/databases/(default)/documents/items/$(itemId)).data;
+      return item.sensitive == false && item.status in ['available', 'claimed'];
+    }
+
+    match /photos/{itemId}/{fileName} {
+      allow read: if isStaff() || (isNorthwestern() && isPublicPhoto(itemId));
+      allow create, update: if isStaff()
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 10 * 1024 * 1024;
+      allow delete: if isStaff();
+    }
+  }
+}

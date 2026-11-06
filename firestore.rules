@@ -1,0 +1,69 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Must stay in sync with src/utilities/email.ts
+    function isNorthwestern() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower().matches('^[^@]+@(u[.])?northwestern[.]edu$');
+    }
+
+    function roleDoc() {
+      return /databases/$(database)/documents/roles/$(request.auth.token.email.lower());
+    }
+
+    function role() {
+      return exists(roleDoc()) ? get(roleDoc()).data.role : 'user';
+    }
+
+    function isStaff() {
+      return isNorthwestern() && role() in ['admin', 'superadmin'];
+    }
+
+    function isSuperAdmin() {
+      return isNorthwestern() && role() == 'superadmin';
+    }
+
+    match /roles/{email} {
+      allow read: if isNorthwestern()
+        && (request.auth.token.email.lower() == email || isSuperAdmin());
+      // A super-admin cannot remove or demote themselves.
+      allow create, update: if isSuperAdmin()
+        && request.resource.data.role in ['admin', 'superadmin']
+        && (email != request.auth.token.email.lower() || request.resource.data.role == 'superadmin');
+      allow delete: if isSuperAdmin() && email != request.auth.token.email.lower();
+    }
+
+    match /desks/{deskId} {
+      allow read: if isNorthwestern();
+      allow write: if isSuperAdmin();
+    }
+
+    match /counters/{counterId} {
+      allow read, write: if isStaff();
+    }
+
+    match /items/{itemId} {
+      // Students see items being held and recent pickups; donated/discarded are staff-only.
+      allow read: if isStaff()
+        || (isNorthwestern() && resource.data.status in ['available', 'claimed']);
+      allow create, update: if isStaff()
+        && request.resource.data.status in ['available', 'claimed', 'donated', 'discarded'];
+      allow delete: if false;
+
+      // Private details, claim record, disposal record
+      match /private/{docId} {
+        allow read, write: if isStaff();
+      }
+    }
+
+    // Append-only history of every staff action
+    match /activity/{entryId} {
+      allow read: if isStaff();
+      allow create: if isStaff() && request.resource.data.byEmail == request.auth.token.email;
+      allow update, delete: if false;
+    }
+  }
+}

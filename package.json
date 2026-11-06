@@ -9,12 +9,15 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest --ui",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "deploy": "npm run build && npx firebase-tools deploy"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "firebase": "^13.2.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "react-router": "^7.18.5",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
