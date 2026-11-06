@@ -4,7 +4,7 @@ import type { User } from 'firebase/auth';
 import App from './App';
 import { AuthProvider } from './components/AuthProvider';
 import type { AuthEvent } from './services/auth';
-import type { Desk, Item } from './types/item';
+import type { Activity, Desk, Item } from './types/item';
 
 const { authMocks, roleMocks, itemMocks, deskMocks, activityMocks } = vi.hoisted(() => {
   const noop = () => () => {};
@@ -19,7 +19,7 @@ const { authMocks, roleMocks, itemMocks, deskMocks, activityMocks } = vi.hoisted
       getPhotoUrl: vi.fn(() => new Promise(() => {})),
     },
     deskMocks: { subscribeDesks: vi.fn(), saveDesk: vi.fn(), addEvanstonDesks: vi.fn() },
-    activityMocks: { subscribeActivity: vi.fn(noop) },
+    activityMocks: { subscribeActivity: vi.fn(noop), subscribeItemActivity: vi.fn() },
   };
 });
 
@@ -134,5 +134,28 @@ describe('App', () => {
     const row = (await screen.findByRole('link', { name: 'Black backpack' })).closest('tr');
     expect(row).not.toBeNull();
     expect(within(row as HTMLElement).getByText(/Past holding/)).toBeInTheDocument();
+  });
+
+  it('shows staff who logged an item and what happened to it since', async () => {
+    const entry = (id: string, type: Activity['type'], detail: string, by: string, ago: number): Activity => ({
+      id,
+      type,
+      itemId: 'b',
+      itemName: 'Black backpack',
+      detail,
+      at: daysAgo(ago),
+      by,
+    });
+    activityMocks.subscribeItemActivity.mockImplementation((_id: string, onChange: (a: Activity[]) => void) => {
+      onChange([entry('1', 'logged', 'at Norris Center', 'Maya Patel', 45), entry('2', 'edited', '', 'Sam Okafor', 44)]);
+      return () => {};
+    });
+    window.history.pushState({}, '', '/inventory/b');
+    signInAs('admin');
+    renderApp();
+    const history = within(await screen.findByRole('region', { name: 'History' }));
+    expect(history.getByText(/Logged at Norris Center/)).toHaveTextContent('by Maya Patel');
+    expect(history.getByText(/Edited/)).toHaveTextContent('by Sam Okafor');
+    expect(activityMocks.subscribeItemActivity).toHaveBeenCalledWith('b', expect.any(Function), expect.any(Function));
   });
 });

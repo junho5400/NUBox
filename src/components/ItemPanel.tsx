@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { useItemPrivate } from '../hooks/useData';
+import { useItemActivity, useItemPrivate } from '../hooks/useData';
 import type { Desk, Item } from '../types/item';
+import { ACTIVITY_VERBS, isNote } from '../utilities/activity';
 import { buttonClass } from '../utilities/classes';
-import { formatDays, formatLongDate } from '../utilities/dates';
+import { formatDays, formatLongDate, formatShortDate, formatTime } from '../utilities/dates';
 import { daysHeld, isPastHolding } from '../utilities/items';
 import { Button } from './Button';
 import { CloseDialog } from './CloseDialog';
@@ -18,6 +19,39 @@ interface Props {
   desks: Desk[];
   closeTo: string;
 }
+
+/** Every staff action on the item, oldest first. The left column lines up with the detail labels above. */
+const History = ({ itemId }: { itemId: string }) => {
+  const history = useItemActivity(itemId);
+  if (history.status === 'loading' || (history.status === 'ready' && history.data.length === 0)) return null;
+  return (
+    <section aria-labelledby="history">
+      <h3 id="history" className="pb-3 text-small text-ink-2">
+        History
+      </h3>
+      {history.status === 'error' ? (
+        <p className="text-small text-danger">Couldn’t load history.</p>
+      ) : (
+        <ol className="border-b border-line">
+          {history.data.map((e) => (
+            <li key={e.id} className="flex items-baseline gap-4 border-t border-line py-3">
+              <span className="w-28 shrink-0 text-small leading-[1.375rem] text-ink-2">
+                {formatShortDate(e.at)}
+                <span className="block">{formatTime(e.at)}</span>
+              </span>
+              <p className="min-w-0 break-words">
+                {ACTIVITY_VERBS[e.type]}
+                {!isNote(e.type) && e.detail && ` ${e.detail}`}
+                <span className="block text-ink-2">by {e.by}</span>
+                {isNote(e.type) && e.detail && <span className="block text-ink-2">{e.detail}</span>}
+              </p>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+};
 
 export const ItemPanel = ({ item, desks, closeTo }: Props) => {
   const priv = useItemPrivate(item.id);
@@ -100,6 +134,7 @@ export const ItemPanel = ({ item, desks, closeTo }: Props) => {
           </div>
         </div>
       )}
+      <History itemId={item.id} />
       <ReleaseDialog key={`r-${item.id}`} item={item} open={dialog === 'release'} onClose={() => setDialog(null)} />
       <TransferDialog key={`t-${item.id}`} item={item} desks={desks} open={dialog === 'transfer'} onClose={() => setDialog(null)} />
       <CloseDialog key={`c-${item.id}`} item={item} open={dialog === 'close'} onClose={() => setDialog(null)} />

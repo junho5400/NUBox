@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router';
 import { useActivity } from '../hooks/useData';
 import type { Activity, ActivityType } from '../types/item';
+import { ACTIVITY_VERBS, isNote } from '../utilities/activity';
 import { formatDay, formatTime } from '../utilities/dates';
 import { PageTitle } from './PageTitle';
 import { Tabs } from './Tabs';
@@ -14,18 +15,6 @@ const FILTERS: { id: Filter; label: string; types: ActivityType[] }[] = [
   { id: 'transferred', label: 'Transferred', types: ['transferred'] },
   { id: 'closed', label: 'Closed', types: ['donated', 'discarded'] },
 ];
-
-const VERBS: Record<ActivityType, string> = {
-  logged: 'Logged',
-  edited: 'Edited',
-  released: 'Released',
-  transferred: 'Transferred',
-  donated: 'Donated',
-  discarded: 'Discarded',
-};
-
-/** Notes on donations are free text, so they go on their own line. */
-const isNote = (type: ActivityType) => type === 'donated' || type === 'discarded';
 
 const groupByDay = (entries: Activity[]) => {
   const groups: { day: string; entries: Activity[] }[] = [];
@@ -65,7 +54,7 @@ export const ActivityPage = () => {
                 <li key={e.id} className="flex items-baseline gap-4 border-t border-line py-3.5 md:gap-6">
                   <span className="w-16 shrink-0 text-small text-ink-3">{formatTime(e.at)}</span>
                   <p className="min-w-0 flex-1 text-ink-2">
-                    {VERBS[e.type]}{' '}
+                    {ACTIVITY_VERBS[e.type]}{' '}
                     <Link to={`/inventory/${e.itemId}`} className="font-medium text-ink hover:text-accent">
                       {e.itemName}
                     </Link>

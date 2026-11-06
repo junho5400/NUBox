@@ -40,7 +40,7 @@ const seeds: Seed[] = [
   ['Silver bracelet', 'Jewelry', 'norris', 37, { sensitive: true }],
   ['Black backpack', 'Bags', 'spac', 41, { photoPath: 'p:#1f2023:3:4' }],
   ['Reading glasses', 'Other', 'main-library', 45, { photoPath: 'p:#a07c55:16:9' }],
-  ['Gray scarf', 'Clothing', 'main-library', 50, { status: 'donated' }],
+  ['Gray scarf', 'Clothing', 'main-library', 50, { status: 'donated', statusChangedAt: day(19) }],
 ];
 
 export const items: Item[] = seeds.map(([name, category, deskId, ago, extra], i) => ({
@@ -66,12 +66,22 @@ export const privateDetails: Record<string, { details: string; claim: Claim | nu
   'item-15': { details: '', claim: null, disposal: { method: 'donated', note: 'Past holding', at: day(19), by: 'Maya Patel' } },
 };
 
+const STAFF = ['Maya Patel', 'Sam Okafor', 'Junho Hong'];
+/** The backpack was logged at Mudd, then transferred to SPAC. */
+const loggedDesk = (item: Item) => desks.find((d) => d.id === (item.id === 'item-13' ? 'mudd-library' : item.deskId));
+
 export const activity: Activity[] = [
-  { id: 'a1', type: 'released', itemId: 'item-6', itemName: 'TI-84 Plus calculator', detail: 'to wcat2028', at: day(0), by: 'Junho Hong' },
-  { id: 'a2', type: 'logged', itemId: 'item-1', itemName: 'Blue Hydro Flask', detail: 'at SPAC', at: day(1), by: 'Maya Patel' },
-  { id: 'a3', type: 'logged', itemId: 'item-2', itemName: 'AirPods Pro case', detail: 'at Main Library', at: day(1), by: 'Sam Okafor' },
+  ...items.map((item, i): Activity => ({
+    id: `l${i + 1}`,
+    type: 'logged',
+    itemId: item.id,
+    itemName: item.name,
+    detail: `at ${loggedDesk(item)?.name}`,
+    at: item.createdAt,
+    by: STAFF[i % STAFF.length],
+  })),
+  { id: 'a1', type: 'released', itemId: 'item-6', itemName: 'TI-84 Plus calculator', detail: 'to wcat2028', at: day(3), by: 'Junho Hong' },
   { id: 'a4', type: 'transferred', itemId: 'item-13', itemName: 'Black backpack', detail: 'from Mudd Library to SPAC', at: day(2), by: 'Junho Hong' },
-  { id: 'a5', type: 'logged', itemId: 'item-3', itemName: 'Wallet', detail: 'at Norris Center', at: day(2), by: 'Junho Hong' },
   { id: 'a6', type: 'donated', itemId: 'item-15', itemName: 'Gray scarf', detail: 'Past holding', at: day(19), by: 'Maya Patel' },
 ];
 

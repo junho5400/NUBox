@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { subscribeActivity } from '../services/activity';
+import { subscribeActivity, subscribeItemActivity } from '../services/activity';
 import { subscribeDesks } from '../services/desks';
 import { getPhotoUrl, subscribeAllItems, subscribeItem, subscribeItemPrivate, subscribePublicItems } from '../services/items';
 import { subscribeRoles, type RoleGrant } from '../services/roles';
@@ -55,6 +55,12 @@ export const useItem = (id: string): Loadable<Item | null> => {
 export const useItemPrivate = (id: string): Loadable<ItemPrivate> => {
   const [state, set] = useKeyed<ItemPrivate>(id);
   useEffect(() => subscribeItemPrivate(id, (d) => set(ready(d)), (e) => set(failed(e))), [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  return state;
+};
+
+export const useItemActivity = (id: string): Loadable<Activity[]> => {
+  const [state, set] = useKeyed<Activity[]>(id);
+  useEffect(() => subscribeItemActivity(id, (d) => set(ready(d)), (e) => set(failed(e))), [id]); // eslint-disable-line react-hooks/exhaustive-deps
   return state;
 };
 

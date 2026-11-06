@@ -6,3 +6,9 @@ export const subscribeActivity = (onChange: (a: Activity[]) => void) => {
   push();
   return subscribe(push);
 };
+
+export const subscribeItemActivity = (itemId: string, onChange: (a: Activity[]) => void) => {
+  const push = () => onChange(activity.filter((a) => a.itemId === itemId).sort((a, b) => a.at.getTime() - b.at.getTime()));
+  push();
+  return subscribe(push);
+};
