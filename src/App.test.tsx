@@ -72,9 +72,10 @@ const emitAuthEvent = (event: AuthEvent) =>
 
 const wildcat = { uid: '1', email: 'wildcat@u.northwestern.edu', displayName: 'Willie Wildcat', photoURL: null } as unknown as User;
 
-const signInAs = (role: 'user' | 'admin') => {
+/** Staff come in through Staff sign in unless a test says otherwise. */
+const signInAs = (role: 'user' | 'admin', staff = role !== 'user') => {
   roleMocks.getRole.mockResolvedValue(role);
-  emitAuthEvent({ kind: 'signedIn', user: wildcat });
+  emitAuthEvent({ kind: 'signedIn', user: wildcat, staff });
 };
 
 /** Starts signed out and returns a way to deliver the next auth event, as Firebase would after the popup. */
@@ -124,7 +125,7 @@ describe('App', () => {
     emitAuthEvent({ kind: 'signedOut' });
     renderApp();
     fireEvent.click(await screen.findByRole('button', { name: 'Sign in with Google' }));
-    expect(authMocks.signInWithGoogle).toHaveBeenCalled();
+    expect(authMocks.signInWithGoogle).toHaveBeenCalledWith(false);
   });
 
   it('turns away a staff sign-in from an account without a staff role', async () => {
@@ -132,8 +133,8 @@ describe('App', () => {
     roleMocks.getRole.mockResolvedValue('user');
     renderApp();
     fireEvent.click(await screen.findByRole('button', { name: 'Staff sign in' }));
-    expect(authMocks.signInWithGoogle).toHaveBeenCalled();
-    await send({ kind: 'signedIn', user: wildcat });
+    expect(authMocks.signInWithGoogle).toHaveBeenCalledWith(true);
+    await send({ kind: 'signedIn', user: wildcat, staff: true });
     expect(await screen.findByRole('alert')).toHaveTextContent('wildcat@u.northwestern.edu isn’t on the staff list.');
     expect(authMocks.signOutUser).toHaveBeenCalled();
   });
@@ -143,8 +144,16 @@ describe('App', () => {
     roleMocks.getRole.mockResolvedValue('admin');
     renderApp();
     fireEvent.click(await screen.findByRole('button', { name: 'Staff sign in' }));
-    await send({ kind: 'signedIn', user: wildcat });
+    await send({ kind: 'signedIn', user: wildcat, staff: true });
     expect(await screen.findByRole('heading', { name: 'Inventory' })).toBeInTheDocument();
+  });
+
+  it('shows a staff account the student catalog after the regular sign-in, even from a staff page', async () => {
+    window.history.pushState({}, '', '/inventory');
+    signInAs('admin', false);
+    renderApp();
+    expect(await screen.findByRole('heading', { name: 'Found items' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Inventory' })).not.toBeInTheDocument();
   });
 
   it('explains when a non-Northwestern account is rejected', async () => {

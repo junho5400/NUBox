@@ -13,7 +13,7 @@ NUBox is a central, searchable catalog of items held at Northwestern's Lost and 
 - Sign in with Google.
 - Allowed accounts: verified emails ending in `@u.northwestern.edu` or `@northwestern.edu`.
 - Any other account is signed out and shown a "Northwestern accounts only" message.
-- One Google sign-in for everyone; the role on the account decides what it sees. A quieter **Staff sign in** link uses the same sign-in, but an account without an admin or super-admin role is signed out and told it isn't on the staff list, instead of landing in the student catalog.
+- Google sign-in for everyone. The main button always opens the student catalog, even for staff accounts. A quieter **Staff sign in** link opens the staff screens; an account without an admin or super-admin role is signed out and told it isn't on the staff list. The choice lasts until sign-out. It only picks the screens: Firestore rules still go by the account's role.
 - Security rules require `request.auth.token.email_verified == true` and a matching email domain for every read.
 
 ## Roles

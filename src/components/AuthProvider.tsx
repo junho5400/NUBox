@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
+import { useEffect, useState, type PropsWithChildren } from 'react';
 import { FirebaseError } from 'firebase/app';
 import { AuthContext, type AuthState } from '../hooks/useAuth';
 import { signInWithGoogle, signOutUser, subscribeToAuth } from '../services/auth';
@@ -12,7 +12,6 @@ const IGNORED_SIGN_IN_ERRORS = ['auth/popup-closed-by-user', 'auth/cancelled-pop
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [state, setState] = useState<AuthState>({ status: 'loading' });
-  const staffIntent = useRef(false);
 
   useEffect(
     () =>
@@ -24,17 +23,15 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
           }));
           return;
         }
-        const asStaff = staffIntent.current;
-        staffIntent.current = false;
         if (event.kind === 'rejected') {
           setState({ status: 'signedOut', error: REJECTED_MESSAGE });
           return;
         }
-        const { user } = event;
+        const { user, staff } = event;
         const email = user.email ?? '';
         try {
           const role = await getRole(email);
-          if (asStaff && role === 'user') {
+          if (staff && role === 'user') {
             await signOutUser();
             setState({ status: 'signedOut', error: notStaffMessage(email) });
             return;
@@ -46,7 +43,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
               email,
               displayName: user.displayName ?? email,
               photoURL: user.photoURL,
-              role,
+              // The regular sign-in always opens the student screens, even for staff accounts.
+              role: staff ? role : 'user',
             },
           });
         } catch (error) {
@@ -58,12 +56,10 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     [],
   );
 
-  const startSignIn = async (asStaff: boolean) => {
-    staffIntent.current = asStaff;
+  const startSignIn = async (staff: boolean) => {
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(staff);
     } catch (error) {
-      staffIntent.current = false;
       if (error instanceof FirebaseError && IGNORED_SIGN_IN_ERRORS.includes(error.code)) return;
       console.error('Sign-in failed', error);
       setState({ status: 'signedOut', error: 'Couldn’t sign in. Try again.' });

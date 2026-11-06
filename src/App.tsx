@@ -26,7 +26,7 @@ const NotFound = () => (
 const StaffOnly = ({ superadmin = false, children }: PropsWithChildren<{ superadmin?: boolean }>) => {
   const user = useUser();
   const allowed = superadmin ? user.role === 'superadmin' : isStaff(user);
-  return allowed ? children : <NotFound />;
+  return allowed ? children : <Navigate to="/" replace />;
 };
 
 const AppRoutes = () => {

@@ -8,8 +8,9 @@ export type AuthState =
 
 export interface AuthContextValue {
   state: AuthState;
+  /** Opens the student screens, whatever the account's role. */
   signIn: () => Promise<void>;
-  /** Same Google sign-in, but an account without a staff role is signed out with a message. */
+  /** Opens the staff screens; an account without a staff role is signed out with a message. */
   signInAsStaff: () => Promise<void>;
   signOut: () => Promise<void>;
 }
