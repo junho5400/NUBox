@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest --ui",
     "coverage": "vitest run --coverage",
-    "deploy": "npm run build && npx firebase-tools deploy"
+    "deploy": "npm run build && npx firebase-tools deploy",
+    "dev:mock": "vite --mode mock"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
