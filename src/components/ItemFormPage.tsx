@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useActor } from '../hooks/useActor';
 import { useDesks, useItem, useItemPrivate, usePhotoUrl } from '../hooks/useData';
@@ -8,7 +8,7 @@ import { createItem, updateItem } from '../services/items';
 import { CATEGORIES, type Category, type Desk, type Item, type ItemInput } from '../types/item';
 import { buttonClass } from '../utilities/classes';
 import { fromDateInputValue, toDateInputValue } from '../utilities/dates';
-import { CENTERED, framedStyle, freeAxis, prepareImage, type Framing } from '../utilities/images';
+import { CENTERED, canPan, framedStyle, maxZoom, panBy, prepareImage, zoomTo, type Framing } from '../utilities/images';
 import { pickableDesks } from '../utilities/items';
 import { Button } from './Button';
 import { Field } from './Field';
@@ -35,59 +35,95 @@ interface Photo {
   framing: Framing;
 }
 
+type Reframe = (change: (f: Framing) => Framing) => void;
+
+/** Arrow keys move the photo by this much of the frame; + and - zoom by this factor. */
 const NUDGE = 0.1;
-const clamp = (n: number) => Math.min(1, Math.max(0, n));
+const ZOOM_STEP = 1.25;
 
 const FileInput = ({ onChange }: { onChange: (f: File | null) => void }) => (
   <input type="file" accept="image/*" className="sr-only" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
 );
 
-/** A newly chosen photo, shown exactly as it will be saved. Dragging moves the 4:3 crop along the photo's long side. */
-const FramedPhoto = ({ photo, onFrame }: { photo: Photo; onFrame: (f: Framing) => void }) => {
+const distance = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
+
+/**
+ * A newly chosen photo, shown exactly as it will be saved. It starts zoomed out
+ * so the whole photo shows; staff zoom (slider, wheel, or pinch) and drag to
+ * choose what fills the frame.
+ */
+const FramedPhoto = ({ photo, onFrame }: { photo: Photo; onFrame: Reframe }) => {
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  const drag = useRef<{ start: number; from: number } | null>(null);
+  const frame = useRef<HTMLDivElement>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ dist: number; zoom: number } | null>(null);
   const { framing } = photo;
-  const free = size && freeAxis(size.width, size.height, framing.turns);
-  const at = (e: PointerEvent) => (free?.axis === 'x' ? e.clientX : e.clientY);
-  const move = (to: number) => free && onFrame({ ...framing, [free.axis]: clamp(to) });
+  const pannable = size !== null && canPan(size.width, size.height, framing);
+  const top = size ? maxZoom(size.width, size.height, framing.turns) : 1;
+
+  const zoom = (to: (z: number) => number) => size && onFrame((f) => zoomTo(size.width, size.height, f, to(f.zoom)));
+  const pan = (dx: number, dy: number) => size && onFrame((f) => panBy(size.width, size.height, f, dx, dy));
+
+  // React's wheel listener is passive, so it can't stop the page from scrolling.
+  useEffect(() => {
+    const el = frame.current;
+    if (!el || !size) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      onFrame((f) => zoomTo(size.width, size.height, f, f.zoom * Math.exp(-e.deltaY / 300)));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [size, onFrame]);
+
+  const onPointerDown = (e: PointerEvent) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const [a, b] = [...pointers.current.values()];
+    pinch.current = b ? { dist: distance(a, b), zoom: framing.zoom } : null;
+  };
+
+  const onPointerMove = (e: PointerEvent) => {
+    const last = pointers.current.get(e.pointerId);
+    if (!last || !size) return;
+    const now = { x: e.clientX, y: e.clientY };
+    pointers.current.set(e.pointerId, now);
+    const [a, b] = [...pointers.current.values()];
+    if (b && pinch.current) {
+      const start = pinch.current;
+      zoom(() => (start.zoom * distance(a, b)) / start.dist);
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      pan((now.x - last.x) / rect.width, (now.y - last.y) / rect.height);
+    }
+  };
+
+  const onPointerEnd = (e: PointerEvent) => {
+    pointers.current.delete(e.pointerId);
+    pinch.current = null;
+  };
 
   const onKeyDown = (e: KeyboardEvent) => {
-    if (!free) return;
-    const step = (free.axis === 'x' ? { ArrowLeft: -1, ArrowRight: 1 } : { ArrowUp: -1, ArrowDown: 1 })[e.key as 'ArrowLeft'];
-    if (!step) return;
+    const step = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (step) pan(-step[0] * NUDGE, -step[1] * NUDGE);
+    else if (e.key === '+' || e.key === '=') zoom((z) => z * ZOOM_STEP);
+    else if (e.key === '-') zoom((z) => z / ZOOM_STEP);
+    else return;
     e.preventDefault();
-    move(framing[free.axis] + step * NUDGE);
   };
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <div
-        {...(free && {
-          role: 'slider',
-          tabIndex: 0,
-          'aria-label': 'Photo position',
-          'aria-orientation': free.axis === 'x' ? 'horizontal' : 'vertical',
-          'aria-valuemin': 0,
-          'aria-valuemax': 100,
-          'aria-valuenow': Math.round(framing[free.axis] * 100),
-        })}
-        onPointerDown={(e) => {
-          if (!free) return;
-          e.currentTarget.setPointerCapture(e.pointerId);
-          drag.current = { start: at(e), from: framing[free.axis] };
-        }}
-        onPointerMove={(e) => {
-          if (!free || !drag.current) return;
-          const rect = e.currentTarget.getBoundingClientRect();
-          const room = (free.axis === 'x' ? rect.width : rect.height) * free.room;
-          move(drag.current.from - (at(e) - drag.current.start) / room);
-        }}
-        onPointerUp={() => (drag.current = null)}
-        onPointerCancel={() => (drag.current = null)}
+        ref={frame}
+        tabIndex={0}
+        aria-label="Photo framing. Arrow keys move the photo, plus and minus zoom."
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerEnd}
+        onPointerCancel={onPointerEnd}
         onKeyDown={onKeyDown}
-        className={`relative aspect-[4/3] overflow-hidden bg-canvas ${
-          free ? `cursor-grab active:cursor-grabbing ${free.axis === 'x' ? 'touch-pan-y' : 'touch-none'}` : ''
-        }`}
+        className={`relative aspect-[4/3] touch-none overflow-hidden bg-canvas ${pannable ? 'cursor-grab active:cursor-grabbing' : ''}`}
       >
         <img
           src={photo.url}
@@ -98,7 +134,21 @@ const FramedPhoto = ({ photo, onFrame }: { photo: Photo; onFrame: (f: Framing) =
           className={`absolute max-w-none select-none ${size ? '' : 'invisible'}`}
         />
       </div>
-      {free && <p className="text-caption text-ink-3">Drag to choose what’s saved.</p>}
+      {size && (
+        <label className="flex items-center gap-3 text-small text-ink-3">
+          Zoom
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.001}
+            // Logarithmic, so each bit of the slider zooms by the same factor.
+            value={Math.log(framing.zoom) / Math.log(top)}
+            onChange={(e) => zoom(() => top ** Number(e.target.value))}
+            className="flex-1 accent-accent"
+          />
+        </label>
+      )}
     </div>
   );
 };
@@ -107,7 +157,7 @@ interface PhotoPickerProps {
   photo: Photo | null;
   existingUrl: string | null;
   onChange: (f: File | null) => void;
-  onFrame: (f: Framing) => void;
+  onFrame: Reframe;
 }
 
 const PhotoPicker = ({ photo, existingUrl, onChange, onFrame }: PhotoPickerProps) => {
@@ -127,12 +177,12 @@ const PhotoPicker = ({ photo, existingUrl, onChange, onFrame }: PhotoPickerProps
         <FramedPhoto key={photo.url} photo={photo} onFrame={onFrame} />
       ) : (
         <div className="relative aspect-[4/3] overflow-hidden bg-canvas">
-          <img src={existingUrl ?? undefined} alt="Current photo" className="absolute inset-0 size-full object-cover" />
+          <img src={existingUrl ?? undefined} alt="Current photo" className="absolute inset-0 size-full object-contain" />
         </div>
       )}
       <div className="flex gap-2">
         {photo && (
-          <Button size="sm" onClick={() => onFrame({ ...CENTERED, turns: (photo.framing.turns + 1) % 4 })}>
+          <Button size="sm" onClick={() => onFrame((f) => ({ ...CENTERED, turns: (f.turns + 1) % 4 }))}>
             Rotate
           </Button>
         )}
@@ -162,7 +212,11 @@ const ItemForm = ({ item, initial, desks }: FormProps) => {
       if (prev) URL.revokeObjectURL(prev.url);
       return file ? { file, url: URL.createObjectURL(file), framing: CENTERED } : null;
     });
-  const setFraming = (framing: Framing) => setPhotoState((prev) => prev && { ...prev, framing });
+  // Stable, so FramedPhoto's wheel listener isn't re-added on every render.
+  const reframe = useCallback<Reframe>(
+    (change) => setPhotoState((prev) => prev && { ...prev, framing: change(prev.framing) }),
+    [],
+  );
   const [showErrors, setShowErrors] = useState(false);
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -224,7 +278,7 @@ const ItemForm = ({ item, initial, desks }: FormProps) => {
 
   return (
     <form onSubmit={submit} noValidate className="grid gap-10 pb-16 lg:grid-cols-[minmax(0,28rem)_minmax(0,36rem)] lg:gap-16">
-      <PhotoPicker photo={photo} existingUrl={existingUrl} onChange={setPhoto} onFrame={setFraming} />
+      <PhotoPicker photo={photo} existingUrl={existingUrl} onChange={setPhoto} onFrame={reframe} />
       <div className="flex flex-col gap-5">
         <Field label="Name" hint="Keep it general. Students see this." error={err('name')}>
           {text('name', 'Wallet')}

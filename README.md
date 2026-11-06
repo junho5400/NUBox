@@ -36,7 +36,7 @@ CS 392 Rapid Prototyping, Fall 2026, Project 2 (social good). Team Blue: Sueun C
 
 - Google sign-in, restricted to verified Northwestern accounts. The main button always opens the student catalog. Staff use the separate **Staff sign in** button for the staff screens; it signs out any account without a staff role.
 - Catalog with text search and filters for desk, category, and status
-- Photos are cropped to 4:3 (staff can rotate them and drag to choose what's kept), scaled to at most 1600px wide, and re-encoded as JPEG before upload, which also drops location data. Students see a category icon instead of the photo for items staff mark as sensitive.
+- Photos are kept whole unless staff zoom in (they can rotate, zoom, and drag to frame them), scaled so the longer side is at most 1600px, and re-encoded as JPEG before upload, which also drops location data. Students see a category icon instead of the photo for items staff mark as sensitive.
 - Private details (for example, "Wildcard for J. S.") are visible to staff only and are used to check a claimant's story
 - Each desk has its own holding period, and items past it are flagged in the staff inventory
 - Picked-up items stay in the catalog as "Claimed" for a set number of days (14 by default, adjustable in Settings)

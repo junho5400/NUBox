@@ -10,7 +10,7 @@ interface ItemPhotoProps {
   className?: string;
 }
 
-/** Photos are stored as 4:3 (see utilities/images.ts); the frame is 4:3 too, cropping older uploads to match. */
+/** Photos keep their own shape (see utilities/images.ts) and are fitted whole inside the 4:3 frame. */
 export const ItemPhoto = ({ item, showSensitive = false, large = false, className = '' }: ItemPhotoProps) => {
   const allowed = item.photoPath !== null && (!item.sensitive || showSensitive);
   const url = usePhotoUrl(allowed ? item.photoPath : null);
@@ -19,7 +19,7 @@ export const ItemPhoto = ({ item, showSensitive = false, large = false, classNam
     <div className={`relative aspect-[4/3] overflow-hidden bg-canvas ${className}`}>
       {url ? (
         // Absolute: in a flex row, Safari sizes an in-flow img to its natural height, not the frame's.
-        <img src={url} alt={item.name} className="absolute inset-0 size-full object-cover" />
+        <img src={url} alt={item.name} className="absolute inset-0 size-full object-contain" />
       ) : (
         !allowed && (
           <span

@@ -90,7 +90,7 @@ Claimant information is admin-only and stored separately from the item document,
 - **Sign in**: Google sign-in button and a quiet "Staff sign in" link; rejection message for non-NU accounts and, from the staff link, for accounts not on the staff list.
 - **Browse** (all users): item grid, newest found first; filters for location, category, and status (available / recently claimed); text search on title and public description.
 - **Item detail** (all users): public fields plus the holding location's hours, contact, and pickup instructions; for admins, also private details, claim record, history, and actions (edit, record pickup, transfer, donate/discard, and undo for closed items).
-- **Add / edit item** (admins): form with optional photo upload and sensitive checkbox. Photos are saved at 4:3; staff can rotate a new photo and drag to choose the crop.
+- **Add / edit item** (admins): form with optional photo upload and sensitive checkbox. A new photo starts zoomed out so the whole photo shows; staff can rotate it, zoom (slider, scroll wheel, or pinch), and drag to choose what fills the 4:3 frame.
 - **Admin dashboard** (admins): all items, including overdue (flagged) items, with filter by status and a "days held" column.
 - **Manage users** (super-admins): list, grant, and revoke roles by email.
 - **Manage locations & categories** (super-admins).
