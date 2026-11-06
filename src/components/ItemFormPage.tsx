@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useActor } from '../hooks/useActor';
 import { useDesks, useItem, useItemPrivate, usePhotoUrl } from '../hooks/useData';
@@ -8,7 +8,7 @@ import { createItem, updateItem } from '../services/items';
 import { CATEGORIES, type Category, type Desk, type Item, type ItemInput } from '../types/item';
 import { buttonClass } from '../utilities/classes';
 import { fromDateInputValue, toDateInputValue } from '../utilities/dates';
-import { prepareImage } from '../utilities/images';
+import { CENTERED, framedStyle, freeAxis, prepareImage, type Framing } from '../utilities/images';
 import { pickableDesks } from '../utilities/items';
 import { Button } from './Button';
 import { Field } from './Field';
@@ -32,28 +32,115 @@ interface FormValues {
 interface Photo {
   file: File;
   url: string;
+  framing: Framing;
 }
 
-const PhotoPicker = ({ photo, existingUrl, onChange }: { photo: Photo | null; existingUrl: string | null; onChange: (f: File | null) => void }) => {
-  const shown = photo?.url ?? existingUrl;
+const NUDGE = 0.1;
+const clamp = (n: number) => Math.min(1, Math.max(0, n));
+
+const FileInput = ({ onChange }: { onChange: (f: File | null) => void }) => (
+  <input type="file" accept="image/*" className="sr-only" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+);
+
+/** A newly chosen photo, shown exactly as it will be saved. Dragging moves the 4:3 crop along the photo's long side. */
+const FramedPhoto = ({ photo, onFrame }: { photo: Photo; onFrame: (f: Framing) => void }) => {
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const drag = useRef<{ start: number; from: number } | null>(null);
+  const { framing } = photo;
+  const free = size && freeAxis(size.width, size.height, framing.turns);
+  const at = (e: PointerEvent) => (free?.axis === 'x' ? e.clientX : e.clientY);
+  const move = (to: number) => free && onFrame({ ...framing, [free.axis]: clamp(to) });
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (!free) return;
+    const step = (free.axis === 'x' ? { ArrowLeft: -1, ArrowRight: 1 } : { ArrowUp: -1, ArrowDown: 1 })[e.key as 'ArrowLeft'];
+    if (!step) return;
+    e.preventDefault();
+    move(framing[free.axis] + step * NUDGE);
+  };
+
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="relative flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-1.5 overflow-hidden border border-dashed border-line-strong bg-canvas focus-within:border-accent hover:border-ink-3">
-        <input type="file" accept="image/*" className="sr-only" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
-        {shown ? (
-          <>
-            <img src={shown} alt="Selected photo" className="absolute inset-0 size-full object-cover" />
-            <span className="absolute right-3 bottom-3 bg-surface px-3 py-1.5 text-small font-medium">Replace photo</span>
-          </>
-        ) : (
-          <>
-            <Icon name="plus" />
-            <span className="font-medium">Add photo</span>
-            <span className="text-small text-ink-3">Drop an image or take one</span>
-          </>
-        )}
+      <div
+        {...(free && {
+          role: 'slider',
+          tabIndex: 0,
+          'aria-label': 'Photo position',
+          'aria-orientation': free.axis === 'x' ? 'horizontal' : 'vertical',
+          'aria-valuemin': 0,
+          'aria-valuemax': 100,
+          'aria-valuenow': Math.round(framing[free.axis] * 100),
+        })}
+        onPointerDown={(e) => {
+          if (!free) return;
+          e.currentTarget.setPointerCapture(e.pointerId);
+          drag.current = { start: at(e), from: framing[free.axis] };
+        }}
+        onPointerMove={(e) => {
+          if (!free || !drag.current) return;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const room = (free.axis === 'x' ? rect.width : rect.height) * free.room;
+          move(drag.current.from - (at(e) - drag.current.start) / room);
+        }}
+        onPointerUp={() => (drag.current = null)}
+        onPointerCancel={() => (drag.current = null)}
+        onKeyDown={onKeyDown}
+        className={`relative aspect-[4/3] overflow-hidden bg-canvas ${
+          free ? `cursor-grab active:cursor-grabbing ${free.axis === 'x' ? 'touch-pan-y' : 'touch-none'}` : ''
+        }`}
+      >
+        <img
+          src={photo.url}
+          alt="Selected photo"
+          draggable={false}
+          onLoad={(e) => setSize({ width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight })}
+          style={size ? framedStyle(size.width, size.height, framing) : undefined}
+          className={`absolute max-w-none select-none ${size ? '' : 'invisible'}`}
+        />
+      </div>
+      {free && <p className="text-caption text-ink-3">Drag to choose what’s saved.</p>}
+    </div>
+  );
+};
+
+interface PhotoPickerProps {
+  photo: Photo | null;
+  existingUrl: string | null;
+  onChange: (f: File | null) => void;
+  onFrame: (f: Framing) => void;
+}
+
+const PhotoPicker = ({ photo, existingUrl, onChange, onFrame }: PhotoPickerProps) => {
+  if (!photo && !existingUrl) {
+    return (
+      <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-1.5 border border-dashed border-line-strong bg-canvas focus-within:border-accent hover:border-ink-3">
+        <FileInput onChange={onChange} />
+        <Icon name="plus" />
+        <span className="font-medium">Add photo</span>
+        <span className="text-small text-ink-3">Drop an image or take one</span>
       </label>
-      <p className="text-caption text-ink-3">Photos are saved at 4:3, cropped from the center as shown.</p>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      {photo ? (
+        <FramedPhoto key={photo.url} photo={photo} onFrame={onFrame} />
+      ) : (
+        <div className="relative aspect-[4/3] overflow-hidden bg-canvas">
+          <img src={existingUrl ?? undefined} alt="Current photo" className="absolute inset-0 size-full object-cover" />
+        </div>
+      )}
+      <div className="flex gap-2">
+        {photo && (
+          <Button size="sm" onClick={() => onFrame({ ...CENTERED, turns: (photo.framing.turns + 1) % 4 })}>
+            Rotate
+          </Button>
+        )}
+        <label className={`${buttonClass('secondary', 'sm')} cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent`}>
+          <FileInput onChange={onChange} />
+          Replace photo
+        </label>
+      </div>
     </div>
   );
 };
@@ -73,8 +160,9 @@ const ItemForm = ({ item, initial, desks }: FormProps) => {
   const setPhoto = (file: File | null) =>
     setPhotoState((prev) => {
       if (prev) URL.revokeObjectURL(prev.url);
-      return file ? { file, url: URL.createObjectURL(file) } : null;
+      return file ? { file, url: URL.createObjectURL(file), framing: CENTERED } : null;
     });
+  const setFraming = (framing: Framing) => setPhotoState((prev) => prev && { ...prev, framing });
   const [showErrors, setShowErrors] = useState(false);
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -101,7 +189,7 @@ const ItemForm = ({ item, initial, desks }: FormProps) => {
     setSaving(true);
     setFailed(false);
     try {
-      const blob = photo ? await prepareImage(photo.file) : null;
+      const blob = photo ? await prepareImage(photo.file, photo.framing) : null;
       if (item) {
         await updateItem(item, input, blob, actor);
         toast('Saved');
@@ -136,7 +224,7 @@ const ItemForm = ({ item, initial, desks }: FormProps) => {
 
   return (
     <form onSubmit={submit} noValidate className="grid gap-10 pb-16 lg:grid-cols-[minmax(0,28rem)_minmax(0,36rem)] lg:gap-16">
-      <PhotoPicker photo={photo} existingUrl={existingUrl} onChange={setPhoto} />
+      <PhotoPicker photo={photo} existingUrl={existingUrl} onChange={setPhoto} onFrame={setFraming} />
       <div className="flex flex-col gap-5">
         <Field label="Name" hint="Keep it general. Students see this." error={err('name')}>
           {text('name', 'Wallet')}
