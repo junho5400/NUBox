@@ -105,7 +105,8 @@ export const ItemPanel = ({ item, desks, closeTo }: Props) => {
         {p?.details && <Detail label="Private">{p.details}</Detail>}
         {p?.claim && (
           <Detail label="Released to">
-            {p.claim.name} ({p.claim.netid})
+            {p.claim.name} ({p.claim.netid || 'visitor'})
+            {p.claim.contact && <span className="block text-ink-2">{p.claim.contact}</span>}
             <span className="block text-ink-2">
               {formatLongDate(p.claim.at)} by {p.claim.by}
             </span>

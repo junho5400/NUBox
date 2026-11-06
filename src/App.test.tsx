@@ -18,6 +18,7 @@ const { authMocks, roleMocks, itemMocks, deskMocks, activityMocks, settingsMocks
       subscribeItem: vi.fn(noop),
       subscribeItemPrivate: vi.fn(noop),
       getPhotoUrl: vi.fn(() => new Promise(() => {})),
+      releaseItem: vi.fn(),
     },
     deskMocks: { subscribeDesks: vi.fn(), saveDesk: vi.fn(), addEvanstonDesks: vi.fn() },
     activityMocks: { subscribeActivity: vi.fn(noop), subscribeItemActivity: vi.fn() },
@@ -214,5 +215,26 @@ describe('App', () => {
     expect(history.getByText(/Logged at Norris Center/)).toHaveTextContent('by Maya Patel');
     expect(history.getByText(/Edited/)).toHaveTextContent('by Sam Okafor');
     expect(activityMocks.subscribeItemActivity).toHaveBeenCalledWith('b', expect.any(Function), expect.any(Function));
+  });
+
+  it('releases to a visitor, who leaves a phone or email instead of a NetID', async () => {
+    itemMocks.releaseItem.mockResolvedValue(undefined);
+    window.history.pushState({}, '', '/inventory/a');
+    signInAs('admin');
+    renderApp();
+    fireEvent.click(await screen.findByRole('button', { name: 'Release to owner' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Visitor' }));
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Pat Doe' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Release' }));
+    expect(screen.getByText('Enter a phone number or email.')).toBeInTheDocument();
+    expect(itemMocks.releaseItem).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText('Phone or email'), { target: { value: '847-555-0100' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Release' }));
+    expect(itemMocks.releaseItem).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'a' }),
+      { netid: '', name: 'Pat Doe', contact: '847-555-0100', note: '' },
+      expect.anything(),
+    );
   });
 });

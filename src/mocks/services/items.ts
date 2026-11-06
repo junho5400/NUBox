@@ -41,10 +41,10 @@ export const updateItem = async (item: Item, input: ItemInput, _photo: Blob | nu
   log('edited', item, '', actor);
   emit();
 };
-export const releaseItem = async (item: Item, claim: Pick<Claim, 'netid' | 'name' | 'note'>, actor: Actor) => {
+export const releaseItem = async (item: Item, claim: Pick<Claim, 'netid' | 'name' | 'contact' | 'note'>, actor: Actor) => {
   Object.assign(item, { status: 'claimed', statusChangedAt: new Date() });
   privateDetails[item.id] = { ...(privateDetails[item.id] ?? { details: '', disposal: null }), claim: { ...claim, at: new Date(), by: actor.name } };
-  log('released', item, `to ${claim.netid}`, actor);
+  log('released', item, claim.netid ? `to ${claim.netid}` : `to ${claim.name} (visitor)`, actor);
   emit();
 };
 export const transferItem = async (item: Item, from: Desk | undefined, to: Desk, actor: Actor) => {

@@ -43,8 +43,11 @@ export interface ItemInput {
 }
 
 export interface Claim {
+  /** Empty for visitors, who leave a contact instead. */
   netid: string;
   name: string;
+  /** Phone or email; only visitors leave one. */
+  contact: string;
   note: string;
   at: Date;
   by: string;

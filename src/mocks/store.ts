@@ -62,7 +62,7 @@ export const items: Item[] = seeds.map(([name, category, deskId, ago, extra], i)
 }));
 
 export const privateDetails: Record<string, { details: string; claim: Claim | null; disposal: Disposal | null }> = {
-  'item-6': { details: 'Name scratched on the back', claim: { netid: 'wcat2028', name: 'Willie Wildcat', note: 'Described the scratched name', at: day(3), by: 'Junho Hong' }, disposal: null },
+  'item-6': { details: 'Name scratched on the back', claim: { netid: 'wcat2028', name: 'Willie Wildcat', contact: '', note: 'Described the scratched name', at: day(3), by: 'Junho Hong' }, disposal: null },
   'item-12': { details: 'Engraved “M.L.” inside the clasp', claim: null, disposal: null },
   'item-15': { details: '', claim: null, disposal: { method: 'donated', note: 'Past holding', at: day(19), by: 'Maya Patel' } },
 };

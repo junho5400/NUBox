@@ -76,7 +76,14 @@ export const subscribeItemPrivate = (
       onChange({
         details: String(byId.details?.text ?? ''),
         claim: claim
-          ? { netid: claim.netid, name: claim.name, note: claim.note ?? '', at: toDate(claim.at), by: claim.by }
+          ? {
+              netid: claim.netid ?? '',
+              name: claim.name,
+              contact: claim.contact ?? '',
+              note: claim.note ?? '',
+              at: toDate(claim.at),
+              by: claim.by,
+            }
           : null,
         disposal: disposal
           ? { method: disposal.method, note: disposal.note ?? '', at: toDate(disposal.at), by: disposal.by }
@@ -154,19 +161,22 @@ export const updateItem = async (item: Item, input: ItemInput, photo: Blob | nul
 
 export const releaseItem = async (
   item: Item,
-  claim: Pick<Claim, 'netid' | 'name' | 'note'>,
+  claim: Pick<Claim, 'netid' | 'name' | 'contact' | 'note'>,
   actor: Actor,
 ): Promise<void> => {
+  const netid = claim.netid.trim().toLowerCase();
+  const name = claim.name.trim();
   const batch = writeBatch(db);
   batch.update(doc(items, item.id), { status: 'claimed', statusChangedAt: serverTimestamp() });
   batch.set(doc(items, item.id, 'private', 'claim'), {
-    netid: claim.netid.trim().toLowerCase(),
-    name: claim.name.trim(),
+    netid,
+    name,
+    contact: claim.contact.trim(),
     note: claim.note.trim(),
     at: serverTimestamp(),
     by: actor.name,
   });
-  batch.set(doc(activity), activityEntry('released', item, `to ${claim.netid.trim().toLowerCase()}`, actor));
+  batch.set(doc(activity), activityEntry('released', item, netid ? `to ${netid}` : `to ${name} (visitor)`, actor));
   await batch.commit();
 };
 

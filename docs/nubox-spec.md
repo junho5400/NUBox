@@ -57,7 +57,7 @@ NUBox is a central, searchable catalog of items held at Northwestern's Lost and 
 The workflow mirrors the current desk process: the claimant comes to the desk, the admin verifies ownership, then records the pickup.
 
 1. Admin opens the item and clicks **Record pickup**.
-2. Admin enters the claimant's **NetID**, **name**, and an optional **verification note** (e.g. "described the sticker on the back").
+2. Admin enters the claimant's **name**, their **NetID** (or, for a visitor without one, a **phone or email**), and an optional **verification note** (e.g. "described the sticker on the back").
 3. The app saves the claim time and the recording admin automatically, and sets the item status to `claimed`.
 
 Claimant information is admin-only and stored separately from the item document, because Firestore cannot hide individual fields of a readable document.
@@ -109,7 +109,8 @@ items/{itemId}                   { number, name, description, category, foundOn,
                                    deskId, status, statusChangedAt, sensitive, photoPath,
                                    createdAt, createdBy }
 items/{itemId}/private/details   { text }                                   (staff only)
-items/{itemId}/private/claim     { netid, name, note, at, by }              (staff only)
+items/{itemId}/private/claim     { netid, name, contact, note, at, by }     (staff only;
+                                   visitors have no netid and leave a contact instead)
 items/{itemId}/private/disposal  { method: 'donated' | 'discarded', note, at, by } (staff only)
 
 activity/{entryId}               { type, itemId, itemName, detail, by, byEmail, at }
