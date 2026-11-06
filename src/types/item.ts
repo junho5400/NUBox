@@ -68,8 +68,12 @@ export interface Desk {
   name: string;
   place: string;
   hours: string;
+  /** Phone and/or email, shown to students. */
+  contact: string;
   bring: string;
   holdingDays: number;
+  /** Inactive desks take no new items but still resolve for items already there. */
+  active: boolean;
 }
 
 export type ActivityType = 'logged' | 'edited' | 'released' | 'transferred' | 'donated' | 'discarded';

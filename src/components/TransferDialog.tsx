@@ -18,7 +18,7 @@ interface Props {
 export const TransferDialog = ({ item, desks, open, onClose }: Props) => {
   const actor = useActor();
   const toast = useToast();
-  const options = desks.filter((d) => d.id !== item.deskId);
+  const options = desks.filter((d) => d.active && d.id !== item.deskId);
   const [toId, setToId] = useState('');
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);

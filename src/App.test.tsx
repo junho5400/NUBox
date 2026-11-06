@@ -33,7 +33,7 @@ const today = new Date();
 const daysAgo = (n: number) => new Date(today.getFullYear(), today.getMonth(), today.getDate() - n);
 
 const desks: Desk[] = [
-  { id: 'norris', name: 'Norris Center', place: 'Norris University Center', hours: '', bring: 'Your Wildcard', holdingDays: 30 },
+  { id: 'norris', name: 'Norris Center', place: 'Norris University Center', hours: '', contact: '', bring: 'Your Wildcard', holdingDays: 30, active: true },
 ];
 
 const item = (overrides: Partial<Item>): Item => ({

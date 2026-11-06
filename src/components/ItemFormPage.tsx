@@ -2,13 +2,14 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useActor } from '../hooks/useActor';
 import { useDesks, useItem, useItemPrivate, usePhotoUrl } from '../hooks/useData';
-import { ALL_DESKS, useStaffDesk } from '../hooks/useStaffDesk';
+import { useStaffDesk } from '../hooks/useStaffDesk';
 import { useToast } from '../hooks/useToast';
 import { createItem, updateItem } from '../services/items';
 import { CATEGORIES, type Category, type Desk, type Item, type ItemInput } from '../types/item';
 import { buttonClass } from '../utilities/classes';
 import { fromDateInputValue, toDateInputValue } from '../utilities/dates';
 import { prepareImage } from '../utilities/images';
+import { pickableDesks } from '../utilities/items';
 import { Button } from './Button';
 import { Field } from './Field';
 import { Icon } from './Icon';
@@ -78,6 +79,7 @@ const ItemForm = ({ item, initial, desks }: FormProps) => {
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
   const existingUrl = usePhotoUrl(item?.photoPath ?? null);
+  const deskOptions = pickableDesks(desks, item?.deskId);
   const set = <K extends keyof FormValues>(key: K, value: FormValues[K]) => setValues((v) => ({ ...v, [key]: value }));
 
   const foundOn = fromDateInputValue(values.foundOn);
@@ -93,7 +95,7 @@ const ItemForm = ({ item, initial, desks }: FormProps) => {
     e.preventDefault();
     const another = (e.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'another';
     setShowErrors(true);
-    const desk = desks.find((d) => d.id === values.deskId);
+    const desk = deskOptions.find((d) => d.id === values.deskId);
     if (Object.values(errors).some(Boolean) || !foundOn || !values.category || !desk) return;
     const input: ItemInput = { ...values, category: values.category, foundOn };
     setSaving(true);
@@ -158,7 +160,7 @@ const ItemForm = ({ item, initial, desks }: FormProps) => {
           </Field>
           <Field label="Found at">{text('foundAt', 'Building and room')}</Field>
           <Field label="Held at" error={err('deskId')}>
-            {(p) => <Select {...p} value={values.deskId} onChange={(v) => set('deskId', v)} options={desks.map((d) => ({ value: d.id, label: d.name }))} />}
+            {(p) => <Select {...p} value={values.deskId} onChange={(v) => set('deskId', v)} options={deskOptions.map((d) => ({ value: d.id, label: d.name }))} />}
           </Field>
         </div>
         <Checkbox checked={values.sensitive} onChange={(e) => set('sensitive', e.target.checked)} label="Sensitive item" hint="Students won’t see the photo." />
@@ -194,13 +196,14 @@ const ItemForm = ({ item, initial, desks }: FormProps) => {
 export const NewItemPage = () => {
   const desks = useDesks();
   const { deskId } = useStaffDesk();
+  const staffDeskActive = desks.status === 'ready' && desks.data.some((d) => d.id === deskId && d.active);
   const initial: FormValues = {
     name: '',
     description: '',
     category: '',
     foundOn: toDateInputValue(new Date()),
     foundAt: '',
-    deskId: deskId === ALL_DESKS ? '' : deskId,
+    deskId: staffDeskActive ? deskId : '',
     sensitive: false,
     privateDetails: '',
   };

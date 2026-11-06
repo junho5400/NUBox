@@ -2,7 +2,7 @@ import { Link, useSearchParams } from 'react-router';
 import { useDesks, usePublicItems } from '../hooks/useData';
 import { CATEGORIES, type Desk, type Item } from '../types/item';
 import { formatShortDate } from '../utilities/dates';
-import { byNewest, isVisibleToStudents, matchesSearch } from '../utilities/items';
+import { byNewest, isVisibleToStudents, matchesSearch, pickableDesks } from '../utilities/items';
 import { Button } from './Button';
 import { FilterBar, FilterSearch } from './FilterBar';
 import { ItemPhoto } from './ItemPhoto';
@@ -100,7 +100,7 @@ export const CatalogPage = () => {
           value={deskId}
           active={!!deskId}
           onChange={(v) => setParam('desk', v)}
-          options={[{ value: '', label: 'All' }, ...deskList.map((d) => ({ value: d.id, label: d.name }))]}
+          options={[{ value: '', label: 'All' }, ...pickableDesks(deskList, deskId).map((d) => ({ value: d.id, label: d.name }))]}
           className="basis-full sm:basis-0 sm:flex-1 lg:w-56 lg:flex-none"
         />
         <Select

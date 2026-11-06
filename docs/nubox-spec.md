@@ -98,7 +98,9 @@ Claimant information is admin-only and stored separately from the item document,
 
 ```
 roles/{email}                    { role: 'admin' | 'superadmin', grantedBy, grantedAt }
-desks/{deskId}                   { name, place, hours, bring, holdingDays }
+desks/{deskId}                   { name, place, hours, contact, bring, holdingDays, active }
+                                 (inactive desks are left out of desk choices but still
+                                  resolve for items already there)
 counters/items                   { next }  (sequential item numbers, NB-0001)
 
 items/{itemId}                   { number, name, description, category, foundOn, foundAt,

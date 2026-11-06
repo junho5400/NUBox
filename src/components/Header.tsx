@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { isStaff, useUser } from '../hooks/useActor';
 import { useDesks } from '../hooks/useData';
 import { ALL_DESKS, useStaffDesk } from '../hooks/useStaffDesk';
+import { pickableDesks } from '../utilities/items';
 import { Button } from './Button';
 import { Select } from './Select';
 import { Tabs } from './Tabs';
@@ -23,7 +24,7 @@ const DeskPicker = () => {
   const { deskId, setDeskId } = useStaffDesk();
   const options = [
     { value: ALL_DESKS, label: 'All desks' },
-    ...(desks.status === 'ready' ? desks.data.map((d) => ({ value: d.id, label: d.name })) : []),
+    ...(desks.status === 'ready' ? pickableDesks(desks.data, deskId).map((d) => ({ value: d.id, label: d.name })) : []),
   ];
   return (
     <Select

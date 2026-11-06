@@ -8,6 +8,9 @@ const DEFAULT_HOLDING_DAYS = 30;
 
 export const daysHeld = (item: Item, now = new Date()): number => daysBetween(item.foundOn, now);
 
+/** Desks to offer as choices: active ones, plus the current choice so a deactivated desk still shows as selected. */
+export const pickableDesks = (desks: Desk[], current = ''): Desk[] => desks.filter((d) => d.active || d.id === current);
+
 export const isPastHolding = (item: Item, desk: Desk | undefined, now = new Date()): boolean =>
   item.status === 'available' && daysHeld(item, now) > (desk?.holdingDays ?? DEFAULT_HOLDING_DAYS);
 

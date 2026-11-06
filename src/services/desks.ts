@@ -7,10 +7,10 @@ const desks = collection(db, 'desks');
 
 /** The Evanston desks confirmed to run a lost and found (docs/lost-and-found-research.md). */
 const EVANSTON_DESKS: Desk[] = [
-  { id: 'norris', name: 'Norris Center', place: 'Norris University Center, Center Desk', hours: 'While the building is open', bring: 'Your Wildcard', holdingDays: 30 },
-  { id: 'spac', name: 'SPAC', place: 'Henry Crown Sports Pavilion, front desk', hours: 'While the building is open', bring: 'Your Wildcard', holdingDays: 30 },
-  { id: 'main-library', name: 'Main Library', place: 'University Library, Circulation Desk', hours: 'While the library is open', bring: 'Your Wildcard', holdingDays: 30 },
-  { id: 'mudd-library', name: 'Mudd Library', place: 'Mudd Library, Service Desk', hours: 'While the library is open', bring: 'Your Wildcard', holdingDays: 30 },
+  { id: 'norris', name: 'Norris Center', place: 'Norris University Center, Center Desk', hours: 'While the building is open', contact: '847-491-2301, norriscenter@northwestern.edu', bring: 'Your Wildcard', holdingDays: 30, active: true },
+  { id: 'spac', name: 'SPAC', place: 'Henry Crown Sports Pavilion, front desk', hours: 'While the building is open', contact: '847-467-4313, recreation@northwestern.edu', bring: 'Your Wildcard', holdingDays: 30, active: true },
+  { id: 'main-library', name: 'Main Library', place: 'University Library, Circulation Desk', hours: 'While the library is open', contact: '847-491-7656, circulation@northwestern.edu', bring: 'Your Wildcard', holdingDays: 30, active: true },
+  { id: 'mudd-library', name: 'Mudd Library', place: 'Mudd Library, Service Desk', hours: 'While the library is open', contact: 'mudd@northwestern.edu', bring: 'Your Wildcard', holdingDays: 30, active: true },
 ];
 
 export const subscribeDesks = (onChange: (desks: Desk[]) => void, onError: (error: Error) => void): Unsubscribe =>
@@ -26,8 +26,10 @@ export const subscribeDesks = (onChange: (desks: Desk[]) => void, onError: (erro
               name: String(data.name ?? ''),
               place: String(data.place ?? ''),
               hours: String(data.hours ?? ''),
+              contact: String(data.contact ?? ''),
               bring: String(data.bring ?? ''),
               holdingDays: Number(data.holdingDays ?? 30),
+              active: data.active !== false,
             };
           })
           .sort((a, b) => a.name.localeCompare(b.name)),

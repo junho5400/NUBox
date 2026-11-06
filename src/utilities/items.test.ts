@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Desk, Item } from '../types/item';
-import { formatItemNumber, isPastHolding, isVisibleToStudents, matchesSearch } from './items';
+import { formatItemNumber, isPastHolding, isVisibleToStudents, matchesSearch, pickableDesks } from './items';
 
 const now = new Date(2026, 10, 6);
 const daysAgo = (n: number) => new Date(2026, 10, 6 - n);
@@ -22,7 +22,7 @@ const item = (overrides: Partial<Item> = {}): Item => ({
   ...overrides,
 });
 
-const desk: Desk = { id: 'spac', name: 'SPAC', place: '', hours: '', bring: '', holdingDays: 30 };
+const desk: Desk = { id: 'spac', name: 'SPAC', place: '', hours: '', contact: '', bring: '', holdingDays: 30, active: true };
 
 describe('isPastHolding', () => {
   it('flags available items held longer than the desk allows', () => {
@@ -41,6 +41,18 @@ describe('isVisibleToStudents', () => {
     expect(isVisibleToStudents(item({ status: 'claimed', statusChangedAt: daysAgo(14) }), now)).toBe(true);
     expect(isVisibleToStudents(item({ status: 'claimed', statusChangedAt: daysAgo(15) }), now)).toBe(false);
     expect(isVisibleToStudents(item({ status: 'donated' }), now)).toBe(false);
+  });
+});
+
+describe('pickableDesks', () => {
+  const closed: Desk = { ...desk, id: 'old', name: 'Old desk', active: false };
+
+  it('offers active desks only', () => {
+    expect(pickableDesks([desk, closed])).toEqual([desk]);
+  });
+
+  it('keeps an inactive desk that is already chosen', () => {
+    expect(pickableDesks([desk, closed], 'old')).toEqual([desk, closed]);
   });
 });
 

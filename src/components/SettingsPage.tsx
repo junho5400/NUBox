@@ -10,7 +10,8 @@ import { Button } from './Button';
 import { Field } from './Field';
 import { PageTitle } from './PageTitle';
 import { Select } from './Select';
-import { TextInput } from './Controls';
+import { Tag } from './Tag';
+import { Checkbox, TextInput } from './Controls';
 
 const ROLE_LABELS: Record<StaffRole, string> = { admin: 'Staff', superadmin: 'Super-admin' };
 
@@ -94,7 +95,7 @@ const People = () => {
   );
 };
 
-const EMPTY_DESK: Desk = { id: '', name: '', place: '', hours: '', bring: 'Your Wildcard', holdingDays: 30 };
+const EMPTY_DESK: Desk = { id: '', name: '', place: '', hours: '', contact: '', bring: 'Your Wildcard', holdingDays: 30, active: true };
 
 const DeskForm = ({ desk, onDone }: { desk: Desk; onDone: () => void }) => {
   const toast = useToast();
@@ -112,7 +113,14 @@ const DeskForm = ({ desk, onDone }: { desk: Desk; onDone: () => void }) => {
     setShowErrors(true);
     if (errors.name || errors.holdingDays) return;
     try {
-      await saveDesk({ ...values, name: values.name.trim(), place: values.place.trim(), hours: values.hours.trim(), bring: values.bring.trim() });
+      await saveDesk({
+        ...values,
+        name: values.name.trim(),
+        place: values.place.trim(),
+        hours: values.hours.trim(),
+        contact: values.contact.trim(),
+        bring: values.bring.trim(),
+      });
       toast(`Saved ${values.name.trim()}`);
       onDone();
     } catch (err) {
@@ -121,7 +129,7 @@ const DeskForm = ({ desk, onDone }: { desk: Desk; onDone: () => void }) => {
     }
   };
 
-  const input = (key: 'name' | 'place' | 'hours' | 'bring', placeholder: string) => (p: object) => (
+  const input = (key: 'name' | 'place' | 'hours' | 'contact' | 'bring', placeholder: string) => (p: object) => (
     <TextInput {...p} value={values[key]} placeholder={placeholder} onChange={(e) => set(key, e.target.value)} />
   );
 
@@ -130,11 +138,19 @@ const DeskForm = ({ desk, onDone }: { desk: Desk; onDone: () => void }) => {
       <Field label="Name" error={showErrors ? errors.name : undefined}>{input('name', 'Norris Center')}</Field>
       <Field label="Where">{input('place', 'Building and desk')}</Field>
       <Field label="Hours">{input('hours', 'While the building is open')}</Field>
+      <Field label="Contact">{input('contact', 'Phone or email')}</Field>
       <Field label="Bring">{input('bring', 'Your Wildcard')}</Field>
       <Field label="Hold for (days)" hint="Items past this are flagged." error={showErrors ? errors.holdingDays : undefined}>
         {(p) => <TextInput {...p} type="number" min={1} value={values.holdingDays} onChange={(e) => set('holdingDays', Number(e.target.value))} />}
       </Field>
-      <div className="flex items-end gap-2">
+      <Checkbox
+        checked={values.active}
+        onChange={(e) => set('active', e.target.checked)}
+        label="Active"
+        hint="Inactive desks can’t take new items. Items already there stay listed."
+        className="sm:col-span-2"
+      />
+      <div className="flex gap-2 sm:col-span-2">
         <Button variant="primary" type="submit">Save</Button>
         <Button variant="quiet" onClick={onDone}>Cancel</Button>
       </div>
@@ -184,8 +200,11 @@ const Desks = () => {
             ) : (
               <div key={d.id} className="flex items-start gap-4 border-t border-line py-4">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium">{d.name}</p>
-                  <p className="text-small text-ink-2">{[d.place, d.hours, `Holds ${d.holdingDays} days`].filter(Boolean).join('. ')}</p>
+                  <p className="flex items-center gap-2 font-medium">
+                    {d.name}
+                    {!d.active && <Tag>Inactive</Tag>}
+                  </p>
+                  <p className="text-small text-ink-2">{[d.place, d.hours, `Holds ${d.holdingDays} days`, d.contact].filter(Boolean).join('. ')}</p>
                 </div>
                 <Button variant="quiet" size="sm" onClick={() => setEditing(d.id)}>Edit</Button>
               </div>

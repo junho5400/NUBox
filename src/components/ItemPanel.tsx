@@ -125,7 +125,7 @@ export const ItemPanel = ({ item, desks, closeTo }: Props) => {
             Release to owner
           </Button>
           <div className="grid grid-cols-2 gap-2">
-            <Button onClick={() => setDialog('transfer')} disabled={desks.length < 2}>
+            <Button onClick={() => setDialog('transfer')} disabled={!desks.some((d) => d.active && d.id !== item.deskId)}>
               Transfer
             </Button>
             <Button onClick={() => setDialog('close')}>

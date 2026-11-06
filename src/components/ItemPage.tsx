@@ -15,6 +15,7 @@ import { ItemPhoto } from './ItemPhoto';
 const PickUp = ({ item, desk }: { item: Item; desk: Desk | undefined }) => {
   const facts: [string, string][] = [
     ...(desk?.hours ? [['Hours', desk.hours] as [string, string]] : []),
+    ...(desk?.contact ? [['Contact', desk.contact] as [string, string]] : []),
     ...(desk?.bring ? [['Bring', desk.bring] as [string, string]] : []),
     ['Ask for', item.number],
   ];
