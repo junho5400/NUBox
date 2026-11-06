@@ -60,7 +60,7 @@ const People = () => {
             {(p) => <TextInput {...p} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="netid@northwestern.edu" />}
           </Field>
         </div>
-        <div className="w-40">
+        <div className="flex-1 sm:w-40 sm:flex-none">
           <Field label="Role">
             {(p) => (
               <Select
@@ -75,7 +75,7 @@ const People = () => {
             )}
           </Field>
         </div>
-        <Button variant="primary" type="submit" className="sm:mt-[1.625rem]">
+        <Button variant="primary" type="submit" className="mt-[1.625rem]">
           Add
         </Button>
       </form>
