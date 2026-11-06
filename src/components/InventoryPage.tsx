@@ -154,7 +154,7 @@ export const InventoryPage = () => {
       </div>
 
       {id && items.status === 'ready' && (
-        <div className="fixed inset-0 z-20 overflow-y-auto bg-surface lg:sticky lg:top-14 lg:z-auto lg:h-[calc(100vh-3.5rem)] lg:border-l lg:border-line">
+        <div className="fixed inset-x-0 top-14 bottom-0 z-20 overflow-y-auto bg-surface lg:sticky lg:z-auto lg:h-[calc(100vh-3.5rem)] lg:border-l lg:border-line">
           {selected ? (
             <ItemPanel key={selected.id} item={selected} desks={deskList} closeTo={`/inventory${query}`} />
           ) : (
