@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import type { User } from 'firebase/auth';
 import App from './App';
 import { AuthProvider } from './components/AuthProvider';
@@ -68,12 +68,22 @@ const emitAuthEvent = (event: AuthEvent) =>
     return () => {};
   });
 
+const wildcat = { uid: '1', email: 'wildcat@u.northwestern.edu', displayName: 'Willie Wildcat', photoURL: null } as unknown as User;
+
 const signInAs = (role: 'user' | 'admin') => {
   roleMocks.getRole.mockResolvedValue(role);
-  emitAuthEvent({
-    kind: 'signedIn',
-    user: { uid: '1', email: 'wildcat@u.northwestern.edu', displayName: 'Willie Wildcat', photoURL: null } as unknown as User,
+  emitAuthEvent({ kind: 'signedIn', user: wildcat });
+};
+
+/** Starts signed out and returns a way to deliver the next auth event, as Firebase would after the popup. */
+const startSignedOut = () => {
+  let send: (event: AuthEvent) => void = () => {};
+  authMocks.subscribeToAuth.mockImplementation((onEvent: (e: AuthEvent) => void) => {
+    send = onEvent;
+    onEvent({ kind: 'signedOut' });
+    return () => {};
   });
+  return (event: AuthEvent) => act(async () => send(event));
 };
 
 const showPickupsFor = (claimedVisibleDays: number) =>
@@ -111,8 +121,28 @@ describe('App', () => {
   it('starts sign-in from the sign-in page', async () => {
     emitAuthEvent({ kind: 'signedOut' });
     renderApp();
-    fireEvent.click(await screen.findByRole('button', { name: /sign in/i }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign in with Google' }));
     expect(authMocks.signInWithGoogle).toHaveBeenCalled();
+  });
+
+  it('turns away a staff sign-in from an account without a staff role', async () => {
+    const send = startSignedOut();
+    roleMocks.getRole.mockResolvedValue('user');
+    renderApp();
+    fireEvent.click(await screen.findByRole('button', { name: 'Staff sign in' }));
+    expect(authMocks.signInWithGoogle).toHaveBeenCalled();
+    await send({ kind: 'signedIn', user: wildcat });
+    expect(await screen.findByRole('alert')).toHaveTextContent('wildcat@u.northwestern.edu isn’t on the staff list.');
+    expect(authMocks.signOutUser).toHaveBeenCalled();
+  });
+
+  it('sends a staff sign-in from a staff account to the inventory', async () => {
+    const send = startSignedOut();
+    roleMocks.getRole.mockResolvedValue('admin');
+    renderApp();
+    fireEvent.click(await screen.findByRole('button', { name: 'Staff sign in' }));
+    await send({ kind: 'signedIn', user: wildcat });
+    expect(await screen.findByRole('heading', { name: 'Inventory' })).toBeInTheDocument();
   });
 
   it('explains when a non-Northwestern account is rejected', async () => {

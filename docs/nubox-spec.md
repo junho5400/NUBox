@@ -13,6 +13,7 @@ NUBox is a central, searchable catalog of items held at Northwestern's Lost and 
 - Sign in with Google.
 - Allowed accounts: verified emails ending in `@u.northwestern.edu` or `@northwestern.edu`.
 - Any other account is signed out and shown a "Northwestern accounts only" message.
+- One Google sign-in for everyone; the role on the account decides what it sees. A quieter **Staff sign in** link uses the same sign-in, but an account without an admin or super-admin role is signed out and told it isn't on the staff list, instead of landing in the student catalog.
 - Security rules require `request.auth.token.email_verified == true` and a matching email domain for every read.
 
 ## Roles
@@ -85,7 +86,7 @@ Claimant information is admin-only and stored separately from the item document,
 
 ## Screens
 
-- **Sign in**: Google sign-in button; rejection message for non-NU accounts.
+- **Sign in**: Google sign-in button and a quiet "Staff sign in" link; rejection message for non-NU accounts and, from the staff link, for accounts not on the staff list.
 - **Browse** (all users): item grid, newest found first; filters for location, category, and status (available / recently claimed); text search on title and public description.
 - **Item detail** (all users): public fields plus the holding location's hours, contact, and pickup instructions; for admins, also private details, claim record, history, and actions (edit, record pickup, transfer, donate/discard).
 - **Add / edit item** (admins): form with optional photo upload and sensitive checkbox.
