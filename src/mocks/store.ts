@@ -1,5 +1,6 @@
 // In-memory data for `npm run dev:mock`. Never bundled into production.
 import type { Activity, Claim, Desk, Disposal, Item } from '../types/item';
+import type { AppSettings } from '../types/settings';
 import type { Role } from '../types/user';
 
 type Listener = () => void;
@@ -84,6 +85,8 @@ export const activity: Activity[] = [
   { id: 'a4', type: 'transferred', itemId: 'item-13', itemName: 'Black backpack', detail: 'from Mudd Library to SPAC', at: day(2), by: 'Junho Hong' },
   { id: 'a6', type: 'donated', itemId: 'item-15', itemName: 'Gray scarf', detail: 'Past holding', at: day(19), by: 'Maya Patel' },
 ];
+
+export const settings: AppSettings = { claimedVisibleDays: 14 };
 
 export const roles: { email: string; role: Exclude<Role, 'user'> }[] = [
   { email: 'willie.wildcat@u.northwestern.edu', role: 'superadmin' },

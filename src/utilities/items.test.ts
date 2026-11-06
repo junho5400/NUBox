@@ -36,11 +36,17 @@ describe('isPastHolding', () => {
 });
 
 describe('isVisibleToStudents', () => {
-  it('shows held items and pickups from the last 14 days only', () => {
-    expect(isVisibleToStudents(item(), now)).toBe(true);
-    expect(isVisibleToStudents(item({ status: 'claimed', statusChangedAt: daysAgo(14) }), now)).toBe(true);
-    expect(isVisibleToStudents(item({ status: 'claimed', statusChangedAt: daysAgo(15) }), now)).toBe(false);
-    expect(isVisibleToStudents(item({ status: 'donated' }), now)).toBe(false);
+  it('shows held items and pickups within the visible window only', () => {
+    expect(isVisibleToStudents(item(), 14, now)).toBe(true);
+    expect(isVisibleToStudents(item({ status: 'claimed', statusChangedAt: daysAgo(14) }), 14, now)).toBe(true);
+    expect(isVisibleToStudents(item({ status: 'claimed', statusChangedAt: daysAgo(15) }), 14, now)).toBe(false);
+    expect(isVisibleToStudents(item({ status: 'donated' }), 14, now)).toBe(false);
+  });
+
+  it('follows the configured window', () => {
+    const pickedUp = item({ status: 'claimed', statusChangedAt: daysAgo(5) });
+    expect(isVisibleToStudents(pickedUp, 7, now)).toBe(true);
+    expect(isVisibleToStudents(pickedUp, 3, now)).toBe(false);
   });
 });
 

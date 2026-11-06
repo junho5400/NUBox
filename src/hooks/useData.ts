@@ -3,7 +3,10 @@ import { subscribeActivity, subscribeItemActivity } from '../services/activity';
 import { subscribeDesks } from '../services/desks';
 import { getPhotoUrl, subscribeAllItems, subscribeItem, subscribeItemPrivate, subscribePublicItems } from '../services/items';
 import { subscribeRoles, type RoleGrant } from '../services/roles';
+import { subscribeSettings } from '../services/settings';
 import type { Activity, Desk, Item, ItemPrivate } from '../types/item';
+import type { AppSettings } from '../types/settings';
+import { CLAIMED_VISIBLE_DAYS } from '../utilities/items';
 import { failed, ready, type Loadable } from './loadable';
 
 const LOADING = { status: 'loading' } as const;
@@ -36,6 +39,19 @@ export const useRoles = (): Loadable<RoleGrant[]> => {
   const [state, setState] = useState<Loadable<RoleGrant[]>>(LOADING);
   useEffect(() => subscribeRoles((d) => setState(ready(d)), (e) => setState(failed(e))), []);
   return state;
+};
+
+export const useSettings = (): Loadable<AppSettings> => {
+  const [state, setState] = useState<Loadable<AppSettings>>(LOADING);
+  useEffect(() => subscribeSettings((d) => setState(ready(d)), (e) => setState(failed(e))), []);
+  return state;
+};
+
+/** Null while loading; the default stands in if settings can't be read. */
+export const useClaimedVisibleDays = (): number | null => {
+  const settings = useSettings();
+  if (settings.status === 'loading') return null;
+  return settings.status === 'ready' ? settings.data.claimedVisibleDays : CLAIMED_VISIBLE_DAYS;
 };
 
 /** Keyed state so a change of id never shows the previous item's data. */

@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from 'react-router';
-import { useDesks, usePublicItems } from '../hooks/useData';
+import { useClaimedVisibleDays, useDesks, usePublicItems } from '../hooks/useData';
 import { CATEGORIES, type Desk, type Item } from '../types/item';
 import { formatShortDate } from '../utilities/dates';
 import { byNewest, isVisibleToStudents, matchesSearch, pickableDesks } from '../utilities/items';
@@ -43,6 +43,7 @@ export const CatalogPage = () => {
   const [params, setParams] = useSearchParams();
   const items = usePublicItems();
   const desks = useDesks();
+  const claimedVisibleDays = useClaimedVisibleDays();
 
   const q = params.get('q') ?? '';
   const category = params.get('category') ?? '';
@@ -64,12 +65,13 @@ export const CatalogPage = () => {
   const deskList = desks.status === 'ready' ? desks.data : [];
   const deskById = new Map(deskList.map((d) => [d.id, d]));
   const sinceDate = SINCE_OPTIONS.some((o) => o.value === since && since) ? daysAgo(Number(since)) : null;
+  const loading = items.status === 'loading' || (items.status === 'ready' && claimedVisibleDays === null);
   const visible =
-    items.status === 'ready'
+    items.status === 'ready' && claimedVisibleDays !== null
       ? items.data
           .filter(
             (item) =>
-              isVisibleToStudents(item) &&
+              isVisibleToStudents(item, claimedVisibleDays) &&
               (!q || matchesSearch(item, q)) &&
               (!category || item.category === category) &&
               (!deskId || item.deskId === deskId) &&
@@ -117,9 +119,9 @@ export const CatalogPage = () => {
       </FilterBar>
 
       <div className="pt-8">
-        {items.status === 'loading' && <p className="text-ink-3">Loading</p>}
+        {loading && <p className="text-ink-3">Loading</p>}
         {items.status === 'error' && <p className="text-danger">Couldn’t load items. Refresh to try again.</p>}
-        {items.status === 'ready' && visible.length === 0 && (
+        {!loading && items.status === 'ready' && visible.length === 0 && (
           <div className="flex flex-col items-start gap-3 py-8">
             <p className="text-heading">{filtered ? 'No items match.' : 'Nothing has been turned in yet.'}</p>
             {filtered && (

@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router';
-import { useDesks, useItem } from '../hooks/useData';
+import { useClaimedVisibleDays, useDesks, useItem } from '../hooks/useData';
 import type { Desk, Item } from '../types/item';
 import { formatLongDate } from '../utilities/dates';
 import { isVisibleToStudents } from '../utilities/items';
@@ -52,10 +52,11 @@ export const ItemPage = () => {
   const { id = '' } = useParams();
   const item = useItem(id);
   const desks = useDesks();
+  const claimedVisibleDays = useClaimedVisibleDays();
 
-  if (item.status === 'loading') return <p className="px-4 py-12 text-ink-3 md:px-8">Loading</p>;
+  if (item.status === 'loading' || claimedVisibleDays === null) return <p className="px-4 py-12 text-ink-3 md:px-8">Loading</p>;
   // Students get a permission error for items that are no longer public.
-  if (item.status === 'error' || !item.data || !isVisibleToStudents(item.data)) return <Gone />;
+  if (item.status === 'error' || !item.data || !isVisibleToStudents(item.data, claimedVisibleDays)) return <Gone />;
 
   const it = item.data;
   const desk = desks.status === 'ready' ? desks.data.find((d) => d.id === it.deskId) : undefined;

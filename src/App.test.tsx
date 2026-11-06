@@ -5,8 +5,9 @@ import App from './App';
 import { AuthProvider } from './components/AuthProvider';
 import type { AuthEvent } from './services/auth';
 import type { Activity, Desk, Item } from './types/item';
+import type { AppSettings } from './types/settings';
 
-const { authMocks, roleMocks, itemMocks, deskMocks, activityMocks } = vi.hoisted(() => {
+const { authMocks, roleMocks, itemMocks, deskMocks, activityMocks, settingsMocks } = vi.hoisted(() => {
   const noop = () => () => {};
   return {
     authMocks: { signInWithGoogle: vi.fn(), signOutUser: vi.fn(), subscribeToAuth: vi.fn() },
@@ -20,6 +21,7 @@ const { authMocks, roleMocks, itemMocks, deskMocks, activityMocks } = vi.hoisted
     },
     deskMocks: { subscribeDesks: vi.fn(), saveDesk: vi.fn(), addEvanstonDesks: vi.fn() },
     activityMocks: { subscribeActivity: vi.fn(noop), subscribeItemActivity: vi.fn() },
+    settingsMocks: { subscribeSettings: vi.fn(), saveSettings: vi.fn() },
   };
 });
 
@@ -28,6 +30,7 @@ vi.mock('./services/roles', () => roleMocks);
 vi.mock('./services/items', () => itemMocks);
 vi.mock('./services/desks', () => deskMocks);
 vi.mock('./services/activity', () => activityMocks);
+vi.mock('./services/settings', () => settingsMocks);
 
 const today = new Date();
 const daysAgo = (n: number) => new Date(today.getFullYear(), today.getMonth(), today.getDate() - n);
@@ -73,6 +76,12 @@ const signInAs = (role: 'user' | 'admin') => {
   });
 };
 
+const showPickupsFor = (claimedVisibleDays: number) =>
+  settingsMocks.subscribeSettings.mockImplementation((onChange: (s: AppSettings) => void) => {
+    onChange({ claimedVisibleDays });
+    return () => {};
+  });
+
 const renderApp = () =>
   render(
     <AuthProvider>
@@ -96,6 +105,7 @@ describe('App', () => {
       onChange(desks);
       return () => {};
     });
+    showPickupsFor(14);
   });
 
   it('starts sign-in from the sign-in page', async () => {
@@ -117,6 +127,13 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { name: 'Found items' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: /Blue Hydro Flask/ })).toBeInTheDocument();
     expect(screen.queryByText('Old umbrella')).not.toBeInTheDocument();
+  });
+
+  it('keeps pickups listed for as long as settings say', async () => {
+    showPickupsFor(30);
+    signInAs('user');
+    renderApp();
+    expect(await screen.findByRole('link', { name: /Old umbrella/ })).toHaveTextContent('Picked up');
   });
 
   it('filters the catalog by search text', async () => {

@@ -102,6 +102,7 @@ desks/{deskId}                   { name, place, hours, contact, bring, holdingDa
                                  (inactive desks are left out of desk choices but still
                                   resolve for items already there)
 counters/items                   { next }  (sequential item numbers, NB-0001)
+settings/app                     { claimedVisibleDays }  (any NU account reads, super-admins write)
 
 items/{itemId}                   { number, name, description, category, foundOn, foundAt,
                                    deskId, status, statusChangedAt, sensitive, photoPath,
@@ -114,7 +115,7 @@ activity/{entryId}               { type, itemId, itemName, detail, by, byEmail, 
                                  (staff only, append-only)
 ```
 
-Categories are a fixed list in `src/types/item.ts`. Claimed items stay visible to students for 14 days (`CLAIMED_VISIBLE_DAYS`).
+Categories are a fixed list in `src/types/item.ts`. Claimed items stay visible to students for `settings/app.claimedVisibleDays` days (1–365, set in Settings); until a super-admin saves it, the default is 14 (`CLAIMED_VISIBLE_DAYS`).
 
 ## Storage
 

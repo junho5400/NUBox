@@ -1,7 +1,7 @@
 import type { Desk, Item } from '../types/item';
 import { daysBetween } from './dates';
 
-/** Claimed items stay visible to students for this many days. */
+/** How long claimed items stay visible to students until a super-admin sets it in Settings. */
 export const CLAIMED_VISIBLE_DAYS = 14;
 
 const DEFAULT_HOLDING_DAYS = 30;
@@ -15,9 +15,9 @@ export const isPastHolding = (item: Item, desk: Desk | undefined, now = new Date
   item.status === 'available' && daysHeld(item, now) > (desk?.holdingDays ?? DEFAULT_HOLDING_DAYS);
 
 /** Items a student should see: everything held, plus recent pickups. */
-export const isVisibleToStudents = (item: Item, now = new Date()): boolean =>
+export const isVisibleToStudents = (item: Item, claimedVisibleDays: number, now = new Date()): boolean =>
   item.status === 'available' ||
-  (item.status === 'claimed' && daysBetween(item.statusChangedAt, now) <= CLAIMED_VISIBLE_DAYS);
+  (item.status === 'claimed' && daysBetween(item.statusChangedAt, now) <= claimedVisibleDays);
 
 export const matchesSearch = (item: Item, query: string): boolean => {
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);

@@ -45,6 +45,15 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
+    // Students read it to know how long pickups stay listed.
+    match /settings/app {
+      allow read: if isNorthwestern();
+      allow write: if isSuperAdmin()
+        && request.resource.data.claimedVisibleDays is int
+        && request.resource.data.claimedVisibleDays >= 1
+        && request.resource.data.claimedVisibleDays <= 365;
+    }
+
     match /items/{itemId} {
       // Students see items being held and recent pickups; donated/discarded are staff-only.
       allow read: if isStaff()

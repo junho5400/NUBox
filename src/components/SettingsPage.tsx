@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { useUser } from '../hooks/useActor';
-import { useDesks, useRoles } from '../hooks/useData';
+import { useDesks, useRoles, useSettings } from '../hooks/useData';
 import { useToast } from '../hooks/useToast';
 import { addEvanstonDesks, saveDesk } from '../services/desks';
 import { grantRole, revokeRole, type StaffRole } from '../services/roles';
+import { saveSettings } from '../services/settings';
 import type { Desk } from '../types/item';
 import { isNorthwesternEmail } from '../utilities/email';
 import { Button } from './Button';
@@ -215,12 +216,60 @@ const Desks = () => {
   );
 };
 
+const PickupsForm = ({ initial }: { initial: number }) => {
+  const toast = useToast();
+  const [days, setDays] = useState(String(initial));
+  const [error, setError] = useState<string>();
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    const value = Number(days);
+    if (!Number.isInteger(value) || value < 1 || value > 365) return setError('Enter 1 to 365 days.');
+    setError(undefined);
+    try {
+      await saveSettings({ claimedVisibleDays: value });
+      toast('Saved');
+    } catch (err) {
+      console.error(err);
+      setError('Couldn’t save. Try again.');
+    }
+  };
+
+  return (
+    <form onSubmit={save} noValidate className="flex items-start gap-3">
+      <div className="w-40">
+        <Field label="Show for (days)" error={error}>
+          {(p) => <TextInput {...p} type="number" min={1} max={365} value={days} onChange={(e) => setDays(e.target.value)} />}
+        </Field>
+      </div>
+      <Button variant="primary" type="submit" className="mt-[1.625rem]">
+        Save
+      </Button>
+    </form>
+  );
+};
+
+const Pickups = () => {
+  const settings = useSettings();
+  return (
+    <section aria-labelledby="pickups" className="flex flex-col gap-6">
+      <div>
+        <h2 id="pickups" className="text-title">Picked-up items</h2>
+        <p className="text-ink-2">How long students still see an item after it’s picked up.</p>
+      </div>
+      {settings.status === 'ready' && <PickupsForm initial={settings.data.claimedVisibleDays} />}
+      {settings.status === 'error' && <p className="text-danger">Couldn’t load settings. Refresh to try again.</p>}
+    </section>
+  );
+};
+
 export const SettingsPage = () => (
   <div className="px-4 pb-16 md:px-8">
     <PageTitle>Settings</PageTitle>
     <div className="flex max-w-3xl flex-col gap-16 pt-2">
       <People />
       <Desks />
+      <Pickups />
     </div>
   </div>
 );
