@@ -199,3 +199,13 @@ export const closeItem = async (
   batch.set(doc(activity), activityEntry(method, item, note.trim(), actor));
   await batch.commit();
 };
+
+/** Puts a released, donated, or discarded item back in custody and clears its pickup or disposal record. */
+export const reopenItem = async (item: Item, note: string, actor: Actor): Promise<void> => {
+  const batch = writeBatch(db);
+  batch.update(doc(items, item.id), { status: 'available', statusChangedAt: serverTimestamp() });
+  batch.delete(doc(items, item.id, 'private', 'claim'));
+  batch.delete(doc(items, item.id, 'private', 'disposal'));
+  batch.set(doc(activity), activityEntry('reopened', item, note.trim(), actor));
+  await batch.commit();
+};

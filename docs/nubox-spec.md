@@ -66,7 +66,8 @@ Claimant information is admin-only and stored separately from the item document,
 
 - **Transfer:** an admin can move an item to another location (e.g. Mudd → Norris). The item's current location updates and the move is recorded.
 - **Disposal:** marking an item `donated` or `discarded` records the date, the admin, and an optional note.
-- **History:** every action on an item (created, edited, transferred, picked up, donated, discarded) is appended to an admin-only, append-only history log with the admin and timestamp.
+- **Undo:** a pickup, donation, or discard recorded by mistake can be undone, with an optional reason. The item goes back to `available`, its claim or disposal record is cleared, and the undo is logged.
+- **History:** every action on an item (created, edited, transferred, picked up, donated, discarded, reopened) is appended to an admin-only, append-only history log with the admin and timestamp.
 
 ## Locations and categories
 
@@ -88,7 +89,7 @@ Claimant information is admin-only and stored separately from the item document,
 
 - **Sign in**: Google sign-in button and a quiet "Staff sign in" link; rejection message for non-NU accounts and, from the staff link, for accounts not on the staff list.
 - **Browse** (all users): item grid, newest found first; filters for location, category, and status (available / recently claimed); text search on title and public description.
-- **Item detail** (all users): public fields plus the holding location's hours, contact, and pickup instructions; for admins, also private details, claim record, history, and actions (edit, record pickup, transfer, donate/discard).
+- **Item detail** (all users): public fields plus the holding location's hours, contact, and pickup instructions; for admins, also private details, claim record, history, and actions (edit, record pickup, transfer, donate/discard, and undo for closed items).
 - **Add / edit item** (admins): form with optional photo upload and sensitive checkbox.
 - **Admin dashboard** (admins): all items, including overdue (flagged) items, with filter by status and a "days held" column.
 - **Manage users** (super-admins): list, grant, and revoke roles by email.

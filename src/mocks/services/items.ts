@@ -58,3 +58,9 @@ export const closeItem = async (item: Item, method: Disposal['method'], note: st
   log(method, item, note, actor);
   emit();
 };
+export const reopenItem = async (item: Item, note: string, actor: Actor) => {
+  Object.assign(item, { status: 'available', statusChangedAt: new Date() });
+  privateDetails[item.id] = { ...(privateDetails[item.id] ?? { details: '' }), claim: null, disposal: null };
+  log('reopened', item, note, actor);
+  emit();
+};

@@ -79,7 +79,7 @@ export interface Desk {
   active: boolean;
 }
 
-export type ActivityType = 'logged' | 'edited' | 'released' | 'transferred' | 'donated' | 'discarded';
+export type ActivityType = 'logged' | 'edited' | 'released' | 'transferred' | 'donated' | 'discarded' | 'reopened';
 
 export interface Activity {
   id: string;

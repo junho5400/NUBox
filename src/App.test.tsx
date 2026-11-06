@@ -19,6 +19,7 @@ const { authMocks, roleMocks, itemMocks, deskMocks, activityMocks, settingsMocks
       subscribeItemPrivate: vi.fn(noop),
       getPhotoUrl: vi.fn(() => new Promise(() => {})),
       releaseItem: vi.fn(),
+      reopenItem: vi.fn(),
     },
     deskMocks: { subscribeDesks: vi.fn(), saveDesk: vi.fn(), addEvanstonDesks: vi.fn() },
     activityMocks: { subscribeActivity: vi.fn(noop), subscribeItemActivity: vi.fn() },
@@ -236,5 +237,24 @@ describe('App', () => {
       { netid: '', name: 'Pat Doe', contact: '847-555-0100', note: '' },
       expect.anything(),
     );
+  });
+
+  it('lets staff undo a release, with an optional reason', async () => {
+    itemMocks.reopenItem.mockResolvedValue(undefined);
+    window.history.pushState({}, '', '/inventory/c');
+    signInAs('admin');
+    renderApp();
+    fireEvent.click(await screen.findByRole('button', { name: 'Undo release' }));
+    fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Released the wrong umbrella' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(itemMocks.reopenItem).toHaveBeenCalledWith(expect.objectContaining({ id: 'c' }), 'Released the wrong umbrella', expect.anything());
+  });
+
+  it('offers no undo for items still in custody', async () => {
+    window.history.pushState({}, '', '/inventory/a');
+    signInAs('admin');
+    renderApp();
+    expect(await screen.findByRole('button', { name: 'Release to owner' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Undo/ })).not.toBeInTheDocument();
   });
 });

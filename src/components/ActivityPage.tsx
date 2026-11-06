@@ -9,7 +9,7 @@ import { Tabs } from './Tabs';
 type Filter = 'all' | 'logged' | 'released' | 'transferred' | 'closed';
 
 const FILTERS: { id: Filter; label: string; types: ActivityType[] }[] = [
-  { id: 'all', label: 'All', types: ['logged', 'edited', 'released', 'transferred', 'donated', 'discarded'] },
+  { id: 'all', label: 'All', types: ['logged', 'edited', 'released', 'transferred', 'donated', 'discarded', 'reopened'] },
   { id: 'logged', label: 'Logged', types: ['logged'] },
   { id: 'released', label: 'Released', types: ['released'] },
   { id: 'transferred', label: 'Transferred', types: ['transferred'] },

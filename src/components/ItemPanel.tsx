@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { useItemActivity, useItemPrivate } from '../hooks/useData';
 import type { Desk, Item } from '../types/item';
-import { ACTIVITY_VERBS, isNote } from '../utilities/activity';
+import { ACTIVITY_VERBS, isNote, undoLabel } from '../utilities/activity';
 import { buttonClass } from '../utilities/classes';
 import { formatDays, formatLongDate, formatShortDate, formatTime } from '../utilities/dates';
 import { daysHeld, isPastHolding } from '../utilities/items';
@@ -12,6 +12,7 @@ import { Detail, DetailList } from './DetailList';
 import { Icon } from './Icon';
 import { ItemPhoto } from './ItemPhoto';
 import { ReleaseDialog } from './ReleaseDialog';
+import { ReopenDialog } from './ReopenDialog';
 import { TransferDialog } from './TransferDialog';
 
 interface Props {
@@ -55,8 +56,9 @@ const History = ({ itemId }: { itemId: string }) => {
 
 export const ItemPanel = ({ item, desks, closeTo }: Props) => {
   const priv = useItemPrivate(item.id);
-  const [dialog, setDialog] = useState<'release' | 'transfer' | 'close' | null>(null);
+  const [dialog, setDialog] = useState<'release' | 'transfer' | 'close' | 'reopen' | null>(null);
   const desk = desks.find((d) => d.id === item.deskId);
+  const undo = undoLabel(item.status);
   const days = daysHeld(item);
   const p = priv.status === 'ready' ? priv.data : null;
 
@@ -69,6 +71,11 @@ export const ItemPanel = ({ item, desks, closeTo }: Props) => {
             <Link to={`/inventory/${item.id}/edit`} className={buttonClass('quiet', 'sm')}>
               Edit
             </Link>
+          )}
+          {undo && (
+            <Button variant="quiet" size="sm" onClick={() => setDialog('reopen')}>
+              {undo}
+            </Button>
           )}
           <Link to={closeTo} className={buttonClass('quiet', 'sm')}>
             <Icon name="close" />
@@ -139,6 +146,7 @@ export const ItemPanel = ({ item, desks, closeTo }: Props) => {
       <ReleaseDialog key={`r-${item.id}`} item={item} open={dialog === 'release'} onClose={() => setDialog(null)} />
       <TransferDialog key={`t-${item.id}`} item={item} desks={desks} open={dialog === 'transfer'} onClose={() => setDialog(null)} />
       <CloseDialog key={`c-${item.id}`} item={item} open={dialog === 'close'} onClose={() => setDialog(null)} />
+      {undo && <ReopenDialog key={`u-${item.id}`} item={item} label={undo} open={dialog === 'reopen'} onClose={() => setDialog(null)} />}
     </aside>
   );
 };
