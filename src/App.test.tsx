@@ -136,6 +136,16 @@ describe('App', () => {
     expect(await screen.findByRole('link', { name: /Old umbrella/ })).toHaveTextContent('Picked up');
   });
 
+  it('filters the catalog to picked-up items', async () => {
+    showPickupsFor(30);
+    signInAs('user');
+    renderApp();
+    fireEvent.click(await screen.findByRole('button', { name: 'Status' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Picked up' }));
+    expect(await screen.findByRole('link', { name: /Old umbrella/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Blue Hydro Flask/ })).not.toBeInTheDocument();
+  });
+
   it('filters the catalog by search text', async () => {
     signInAs('user');
     renderApp();

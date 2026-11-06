@@ -18,6 +18,12 @@ const SINCE_OPTIONS = [
   { value: '30', label: 'Past month' },
 ];
 
+const STATUS_OPTIONS = [
+  { value: '', label: 'All' },
+  { value: 'available', label: 'Available' },
+  { value: 'claimed', label: 'Picked up' },
+];
+
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -49,7 +55,8 @@ export const CatalogPage = () => {
   const category = params.get('category') ?? '';
   const deskId = params.get('desk') ?? '';
   const since = params.get('since') ?? '';
-  const filtered = q || category || deskId || since;
+  const status = params.get('status') ?? '';
+  const filtered = q || category || deskId || since || status;
 
   const setParam = (key: string, value: string) =>
     setParams(
@@ -75,7 +82,8 @@ export const CatalogPage = () => {
               (!q || matchesSearch(item, q)) &&
               (!category || item.category === category) &&
               (!deskId || item.deskId === deskId) &&
-              (!sinceDate || item.foundOn >= sinceDate),
+              (!sinceDate || item.foundOn >= sinceDate) &&
+              (!status || item.status === status),
           )
           .sort(byNewest)
       : [];
@@ -84,7 +92,7 @@ export const CatalogPage = () => {
     <div className="px-4 pb-16 md:px-8">
       <PageTitle>Found items</PageTitle>
       <FilterBar>
-        <FilterSearch value={q} onChange={(v) => setParam('q', v)} placeholder="Search by name or color" className="basis-full lg:basis-0 lg:flex-1" />
+        <FilterSearch value={q} onChange={(v) => setParam('q', v)} placeholder="Search by name or color" className="basis-full xl:basis-0 xl:flex-1" />
         <Select
           variant="filter"
           label="Category"
@@ -93,28 +101,39 @@ export const CatalogPage = () => {
           active={!!category}
           onChange={(v) => setParam('category', v)}
           options={[{ value: '', label: 'All' }, ...CATEGORIES.map((c) => ({ value: c, label: c }))]}
-          className="basis-full sm:basis-0 sm:flex-1 lg:w-56 lg:flex-none"
+          className="min-w-0 basis-1/2 lg:basis-0 lg:flex-1 xl:w-56 xl:flex-none"
         />
         <Select
           variant="filter"
           label="Desk"
           aria-label="Desk"
+          align="right"
           value={deskId}
           active={!!deskId}
           onChange={(v) => setParam('desk', v)}
           options={[{ value: '', label: 'All' }, ...pickableDesks(deskList, deskId).map((d) => ({ value: d.id, label: d.name }))]}
-          className="basis-full sm:basis-0 sm:flex-1 lg:w-56 lg:flex-none"
+          className="min-w-0 basis-1/2 lg:basis-0 lg:flex-1 xl:w-52 xl:flex-none"
         />
         <Select
           variant="filter"
           label="Found"
           aria-label="Found"
-          align="right"
           value={since}
           active={!!since}
           onChange={(v) => setParam('since', v)}
           options={SINCE_OPTIONS}
-          className="basis-full sm:basis-0 sm:flex-1 lg:w-52 lg:flex-none"
+          className="min-w-0 basis-1/2 lg:basis-0 lg:flex-1 xl:w-52 xl:flex-none"
+        />
+        <Select
+          variant="filter"
+          label="Status"
+          aria-label="Status"
+          align="right"
+          value={status}
+          active={!!status}
+          onChange={(v) => setParam('status', v)}
+          options={STATUS_OPTIONS}
+          className="min-w-0 basis-1/2 lg:basis-0 lg:flex-1 xl:w-48 xl:flex-none"
         />
       </FilterBar>
 
