@@ -18,7 +18,8 @@ export const ItemPhoto = ({ item, showSensitive = false, large = false, classNam
   return (
     <div className={`relative aspect-[4/3] overflow-hidden bg-canvas ${className}`}>
       {url ? (
-        <img src={url} alt={item.name} className="size-full object-cover" />
+        // Absolute: in a flex row, Safari sizes an in-flow img to its natural height, not the frame's.
+        <img src={url} alt={item.name} className="absolute inset-0 size-full object-cover" />
       ) : (
         !allowed && (
           <span
