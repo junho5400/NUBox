@@ -9,8 +9,8 @@ import type { Plugin } from 'vite'
 // `vite --mode mock` swaps src/services/* for in-memory fakes in src/mocks/services,
 // so every screen can be viewed signed in without Firebase. Never used in builds.
 const mockServices = (): Plugin => {
-  const services = path.resolve(__dirname, 'src/services')
-  const mocks = path.resolve(__dirname, 'src/mocks/services')
+  const services = path.resolve(import.meta.dirname, 'src/services')
+  const mocks = path.resolve(import.meta.dirname, 'src/mocks/services')
   return {
     name: 'nubox-mock-services',
     enforce: 'pre',
@@ -33,6 +33,19 @@ export default defineConfig(({ mode }) => ({
       plugins: ['babel-plugin-react-compiler'],
     }),
   ],
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            { name: 'firebase-firestore', test: /node_modules[\\/]@firebase[\\/]firestore[\\/]/, priority: 3 },
+            { name: 'firebase-auth', test: /node_modules[\\/]@firebase[\\/]auth[\\/]/, priority: 3 },
+            { name: 'firebase', test: /node_modules[\\/]@?firebase[\\/]/, priority: 2 },
+          ],
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',
