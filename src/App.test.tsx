@@ -246,6 +246,7 @@ describe('App', () => {
       { netid: '', name: 'Pat Doe', contact: '847-555-0100', note: '' },
       expect.anything(),
     );
+    expect(await screen.findByText('Released to Pat Doe')).toBeInTheDocument();
   });
 
   it('lets staff undo a release, with an optional reason', async () => {
@@ -257,6 +258,7 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'Released the wrong umbrella' } });
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(itemMocks.reopenItem).toHaveBeenCalledWith(expect.objectContaining({ id: 'c' }), 'Released the wrong umbrella', expect.anything());
+    expect(await screen.findByText('Old umbrella is back in custody')).toBeInTheDocument();
   });
 
   it('offers no undo for items still in custody', async () => {
