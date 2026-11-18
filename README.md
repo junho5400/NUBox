@@ -6,7 +6,7 @@ NUBox lets anyone with a Northwestern account see what is being held at the lost
 
 Live app: https://nubox-58de7.web.app (sign in with a Northwestern Google account)
 
-Project page: https://junho5400.github.io/NUBox/ (source in [docs/index.html](docs/index.html))
+Project page: https://junho5400.github.io/NUBox/docs (source in [docs/index.html](docs/index.html))
 
 CS 392 Rapid Prototyping, Fall 2026, Project 2 (social good). Team Blue: Sueun Cho, Dhriti Guddanti, Junho Hong, Diego Perez-Aguilar.
 
