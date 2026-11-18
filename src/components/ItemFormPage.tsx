@@ -41,8 +41,30 @@ type Reframe = (change: (f: Framing) => Framing) => void;
 const NUDGE = 0.1;
 const ZOOM_STEP = 1.25;
 
-const FileInput = ({ onChange }: { onChange: (f: File | null) => void }) => (
-  <input type="file" accept="image/*" className="sr-only" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+const FileInput = ({ onChange, camera = false }: { onChange: (f: File | null) => void; camera?: boolean }) => (
+  <input
+    type="file"
+    accept="image/*"
+    // Opens the rear camera directly on phones and tablets; desktops ignore it.
+    capture={camera ? 'environment' : undefined}
+    className="sr-only"
+    onChange={(e) => {
+      onChange(e.target.files?.[0] ?? null);
+      // Let staff pick the same file (or retake) again after replacing it.
+      e.target.value = '';
+    }}
+  />
+);
+
+const fileButtonClass = `${buttonClass('secondary', 'sm')} cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent`;
+
+/** Only shown on touch devices, where there's a camera to open. */
+const TakePhotoButton = ({ onChange }: { onChange: (f: File | null) => void }) => (
+  <label className={`${fileButtonClass} self-start not-pointer-coarse:hidden`}>
+    <FileInput camera onChange={onChange} />
+    <Icon name="camera" />
+    Take photo
+  </label>
 );
 
 const distance = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -163,12 +185,15 @@ interface PhotoPickerProps {
 const PhotoPicker = ({ photo, existingUrl, onChange, onFrame }: PhotoPickerProps) => {
   if (!photo && !existingUrl) {
     return (
-      <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-1.5 border border-dashed border-line-strong bg-canvas focus-within:border-accent hover:border-ink-3">
-        <FileInput onChange={onChange} />
-        <Icon name="plus" />
-        <span className="font-medium">Add photo</span>
-        <span className="text-small text-ink-3">Drop an image or take one</span>
-      </label>
+      <div className="flex flex-col gap-3">
+        <label className="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-1.5 border border-dashed border-line-strong bg-canvas focus-within:border-accent hover:border-ink-3">
+          <FileInput onChange={onChange} />
+          <Icon name="plus" />
+          <span className="font-medium">Add photo</span>
+          <span className="text-small text-ink-3">Choose an image</span>
+        </label>
+        <TakePhotoButton onChange={onChange} />
+      </div>
     );
   }
   return (
@@ -186,7 +211,8 @@ const PhotoPicker = ({ photo, existingUrl, onChange, onFrame }: PhotoPickerProps
             Rotate
           </Button>
         )}
-        <label className={`${buttonClass('secondary', 'sm')} cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent`}>
+        <TakePhotoButton onChange={onChange} />
+        <label className={fileButtonClass}>
           <FileInput onChange={onChange} />
           Replace photo
         </label>
