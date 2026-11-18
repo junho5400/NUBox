@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite'
+import { defineConfig, normalizePath } from 'vite'
 import react from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
@@ -9,16 +9,17 @@ import type { Plugin } from 'vite'
 // `vite --mode mock` swaps src/services/* for in-memory fakes in src/mocks/services,
 // so every screen can be viewed signed in without Firebase. Never used in builds.
 const mockServices = (): Plugin => {
-  const services = path.resolve(import.meta.dirname, 'src/services')
-  const mocks = path.resolve(import.meta.dirname, 'src/mocks/services')
+  // Vite ids always use forward slashes, even on Windows.
+  const services = normalizePath(path.resolve(import.meta.dirname, 'src/services'))
+  const mocks = normalizePath(path.resolve(import.meta.dirname, 'src/mocks/services'))
   return {
     name: 'nubox-mock-services',
     enforce: 'pre',
     async resolveId(source, importer, options) {
       if (!importer || importer.startsWith(mocks) || !source.includes('services/')) return null
       const resolved = await this.resolve(source, importer, { ...options, skipSelf: true })
-      if (!resolved?.id.startsWith(services + path.sep)) return null
-      return path.join(mocks, path.basename(resolved.id))
+      if (!resolved?.id.startsWith(services + '/')) return null
+      return `${mocks}/${path.basename(resolved.id)}`
     },
   }
 }
