@@ -79,10 +79,25 @@ npm run dev:mock
 | `npm run dev` | Start the dev server against Firebase |
 | `npm run dev:mock` | Start the dev server with mock data and no Firebase |
 | `npm test` | Run the tests in watch mode with the Vitest UI |
+| `npm run test:e2e` | Run Playwright acceptance tests against local Firebase emulators |
 | `npm run coverage` | Run the tests once and report coverage |
 | `npm run lint` | Run ESLint |
 | `npm run build` | Type-check and build to `dist/` |
 | `npm run deploy` | Build, then deploy hosting and security rules to Firebase (needs a local `.firebaserc`; see below) |
+
+## End-to-end tests
+
+With Node 24+, Java 21+, and the Firebase CLI (`firebase-tools`) on your PATH, run:
+
+```sh
+npm ci
+npx playwright install chromium
+npm run test:e2e
+```
+
+The test command starts Auth, Firestore, and Storage for the local `demo-nubox` project, and Playwright starts the Vite server in `e2e` mode. The catalog test signs in with a simulated Google credential accepted by the Auth emulator and seeds its items in the Firestore emulator. The suite starts with fresh emulator data and shuts down the servers when it finishes.
+
+Add acceptance tests in `e2e/*.e2e.ts`. See [TEST_SPECIFICATIONS.md](TEST_SPECIFICATIONS.md) for Given–When–Then scenarios.
 
 ## Deploying
 

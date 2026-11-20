@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest --ui",
+    "test:e2e": "firebase emulators:exec --project demo-nubox --only auth,firestore,storage \"playwright test\"",
     "coverage": "vitest run --coverage",
     "deploy": "npm run build && npx firebase-tools deploy",
     "dev:mock": "vite --mode mock"
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@babel/core": "^8.0.6",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
     "@rolldown/plugin-babel": "^0.2.4",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
