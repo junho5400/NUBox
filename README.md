@@ -95,9 +95,9 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The test command starts Auth, Firestore, and Storage for the local `demo-nubox` project, and Playwright starts the Vite server in `e2e` mode. The catalog test signs in with a simulated Google credential accepted by the Auth emulator and seeds its items in the Firestore emulator. The suite starts with fresh emulator data and shuts down the servers when it finishes.
+The test command starts Auth, Firestore, and Storage for the local `demo-nubox` project, and Playwright starts the Vite server in `e2e` mode. The tests sign in with simulated Google credentials accepted by the Auth emulator. They reset and seed Firestore before each scenario, then shut down the servers when the suite finishes.
 
-Add acceptance tests in `e2e/*.e2e.ts`. See [TEST_SPECIFICATIONS.md](TEST_SPECIFICATIONS.md) for Given–When–Then scenarios.
+The Chromium suite checks catalog search, the Water bottles category filter, staff and student views of a sensitive photo, a mistaken release returned to custody, and filtering staff inventory to Main Library after logging an item. Add acceptance tests in `e2e/*.e2e.ts`.
 
 ## Deploying
 
